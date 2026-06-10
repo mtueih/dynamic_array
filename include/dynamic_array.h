@@ -1,104 +1,327 @@
 #ifndef DYNAMIC_ARRAY_H
 #define DYNAMIC_ARRAY_H
 
-#include <stddef.h>
+#include <attrs.h>
 #include <errno.h>
+#include <stddef.h>
+
+#if !defined(__STDC_VERSION__) || (defined(__STDC_VERSION__) && __STDC_VERSION__ < 202311L)
 #include <stdbool.h>
+#endif
 
-// 「动态字符串」抽象数据类型声明
-typedef struct DynamicArray DArray;
+// ADT 类型别名声明。
+typedef struct dynamic_array darr_adt;
 
-// 返回值类型为 int 的函数的返回错误码
-enum
-{
+// 状态码。
+enum {
+	// 成功。
 	DARR_SUCCESS = 0,
-	DARR_ARG_INVAL = -EINVAL,
-	DARR_MEM_LOC_FAILD = -ENOMEM
+	// 内存分配失败。
+	DARR_MEMORY_ALLOC_FAILED = ENOMEM,
+	// 无效参数。
+	DARR_INVALID_PARAM = EINVAL,
+	// 计算溢出。
+	DARR_OVERFLOW = ERANGE,
+	// 未知错误。
+	DARR_UNKNOWN_ERROR,
 };
 
-// 「动态字符串」抽象数据类型 API 声明
-/**
- * 创建一个动态数组。
- * @param element_size 所创建动态数组的元素的大小，不能为 0。
- * @param element_destroy_function 一个函数指针，当数组的元素是指向堆内存的指针时，传入一个用来释放它的内存的函数，
- * 当元素被从动态数组中删除时，会调用该函数来释放其内存。当元素不是指向堆内存的指针，或需要手动管理时，传入一个空指针。
- * @param length 数组的初始元素个数。函数不会自动初始化每个元素。
- * @return 动态数组指针。如果为空则表示创建失败。
- */
-DArray *darr_create(size_t elem_size, size_t length);
 
+// API 函数原型（声明）。
+// 创建、销毁、清空。
 /**
- * 销毁一个动态数组。
- * @param darr 要销毁的动态数组的指针。
+ * 创建一个「动态数组」。
+ * @param element_size 「动态数组」的元素大小，不能为 0。
+ * @param length 「动态数组」的初始长度。
+ * @return 所创建的「动态数组」指针，如果创建失败则返回「空指针」。
  */
-void darr_destroy(DArray *darr);
+ATTRS_NODISCARD_SIMPLE
+darr_adt *darr_create(
+	size_t element_size,
+	size_t length
+);
 
 /**
- * 清空一个动态数组。
- * @param darr 要清空的动态数组的指针。
+ * 销毁一个「动态数组」。
+ * @param darr 目标「动态数组」的指针。
  */
-void darr_clear(DArray *darr);
+void darr_destroy(
+	darr_adt *darr
+) ATTRS_NONNULL(1);
 
-DArray *darr_create_from_carr(size_t elem_size, size_t length, const void *carr, size_t count);
-DArray *darr_clone(const DArray *darr);
+/**
+ * 清空一个「动态数组」。
+ * @param darr 目标「动态数组」的指针。
+ */
+void darr_clear(
+	darr_adt *darr
+) ATTRS_NONNULL(1);
 
-int darr_assign_carr(DArray *darr, const void *carr, size_t count);
-int darr_assign(DArray *dst, const DArray *src);
 
-// 获取属性，元素
-size_t darr_element_size(const DArray *darr);
+// 属性获取与设置，以及元素访问。
+/**
+ * 获取一个「动态数组」的内部「C 数组」指针（非 const）。
+ * @param darr 目标「动态数组」的指针。
+ * @return 所获取的「C 数组」指针。
+ */
+void *darr_carr(
+	darr_adt *darr
+) ATTRS_NONNULL(1);
 
-size_t darr_length(const DArray *darr);
+/**
+ * 获取一个「动态数组」的某个元素的指针（非 const）。
+ * @param darr 目标「动态数组」的指针。
+ * @param index 目标元素的索引。
+ * @return 所获取的元素指针。
+ */
+void *darr_at(
+	darr_adt *darr,
+	size_t index
+) ATTRS_NONNULL(1);
 
-size_t darr_capacity(const DArray *darr);
+/**
+ * 获取一个「动态数组」的元素大小。
+ * @param darr 目标「动态数组」的指针。
+ * @return 所获取的元素大小。
+ */
+size_t darr_element_size(
+	const darr_adt *darr
+) ATTRS_NONNULL(1);
 
-bool darr_is_empty(const DArray *darr);
+/**
+ * 获取一个「动态数组」的长度。
+ * @param darr 目标「动态数组」的指针。
+ * @return 所获取的长度。
+ */
+size_t darr_length(
+	const darr_adt *darr
+) ATTRS_NONNULL(1);
 
-void *darr_carr(DArray *darr);
-const void *darr_carr_const(const DArray *darr);
+/**
+ * 判断一个「动态数组」是否是空数组。
+ * @param darr 目标「动态数组」的指针。
+ * @return 如果目标「动态数组」是空数组则返回 true，否则返回 false。
+ */
+bool darr_is_empty(
+	const darr_adt *darr
+) ATTRS_NONNULL(1);
 
-void *darr_at(DArray *darr, size_t pos);
-const void *darr_at_const(const DArray *darr, size_t pos);
+/**
+ * 获取一个「动态数组」的容量。
+ * @param darr 目标「动态数组」的指针。
+ * @return 所获取的容量。
+ */
+size_t darr_capacity(
+	const darr_adt *darr
+) ATTRS_NONNULL(1);
 
-// 增减元素
-int darr_append(DArray *darr, const void *elem);
-int darr_append_n(DArray *darr, const void *elem, size_t count);
-int darr_prepend(DArray *darr, const void *elem);
-int darr_prepend_n(DArray *darr, const void *elem, size_t count);
-int darr_insert(DArray *darr, size_t pos, const void *elem);
-int darr_insert_n(DArray *darr, size_t pos, const void *elem, size_t count);
-void darr_remove(DArray *darr, size_t pos);
-void darr_remove_n(DArray *darr, size_t pos, size_t count);
+/**
+ * 设置一个「动态数组」的容量。
+ * @warning 当「目标容量」小于「当前长度」时，「当前内容」将被截断。
+ * @param darr 目标「动态数组」的指针。
+ * @param new_capacity 目标容量。
+ * @return 全局状态码。
+ */
+int darr_set_capacity(
+	darr_adt *darr,
+	size_t new_capacity
+) ATTRS_NONNULL(1);
 
-// 容量管理
-int darr_reserve(DArray *darr, size_t new_length);
-void darr_shrink_to_fit(DArray *darr);
+/**
+ * 预留一个「动态数组」的容量。
+ * @note 不同于 darr_set_capacity，当「目标容量」小于「当前长度」时，「当前内容」不会被截断。
+ * @param darr 目标「动态数组」的指针。
+ * @param new_capacity 目标容量。
+ * @return 全局状态码。
+ */
+int darr_reserve(
+	darr_adt *darr,
+	size_t new_capacity
+) ATTRS_NONNULL(1);
 
-// 遍历
-void darr_foreach(DArray *darr, void (*func)(void *));
-void darr_foreach_const(const DArray *darr, void (*func)(const void *));
+/**
+ * 调整一个「动态数组」的容量到刚合适。
+ * @param darr 目标「动态数组」的指针。
+ * @return 全局状态码。
+ */
+void darr_shrink_to_fit(
+	darr_adt *darr
+) ATTRS_NONNULL(1);
 
-// 查询
+
+// 增减元素。
+/**
+ * 追加一个元素到一个「动态数组」末尾。
+ * @param darr 目标「动态数组」的指针。
+ * @param element 被追加元素指针。
+ * @return 全局状态码。
+ */
+int darr_append(
+	darr_adt *darr,
+	const void *element
+) ATTRS_NONNULL(1, 2);
+
+/**
+ * 追加多个元素到一个「动态数组」末尾。
+ * @param darr 目标「动态数组」的指针。
+ * @param elements 被追加元素起始指针。
+ * @param count 追加元素个数。
+ * @return 全局状态码。
+ */
+int darr_append_n(
+	darr_adt *darr,
+	const void *elements,
+	size_t count
+) ATTRS_NONNULL(1, 2);
+
+/**
+ * 追加一个元素到一个「动态数组」开头。
+ * @param darr 目标「动态数组」的指针。
+ * @param element 被追加元素指针。
+ * @return 全局状态码。
+ */
+int darr_prepend(
+	darr_adt *darr,
+	const void *element
+) ATTRS_NONNULL(1, 2);
+
+/**
+ * 追加多个元素到一个「动态数组」开头。
+ * @param darr 目标「动态数组」的指针。
+ * @param elements 被追加元素起始指针。
+ * @param count 追加元素个数。
+ * @return 全局状态码。
+ */
+int darr_prepend_n(
+	darr_adt *darr,
+	const void *elements,
+	size_t count
+) ATTRS_NONNULL(1, 2);
+
+/**
+ * 插入一个元素到一个「动态数组」。
+ * @param darr 目标「动态数组」的指针。
+ * @param index 插入位置索引。
+ * @param element 被插入元素指针。
+ * @return 全局状态码。
+ */
+int darr_insert(
+	darr_adt *darr,
+	size_t index,
+	const void *element
+) ATTRS_NONNULL(1, 3);
+
+/**
+ * 插入多个元素到一个「动态数组」。
+ * @param darr 目标「动态数组」的指针。
+ * @param index 插入位置索引。
+ * @param elements 被插入元素起始指针。
+ * @param count 插入元素个数。
+ * @return 全局状态码。
+ */
+int darr_insert_n(
+	darr_adt *darr,
+	size_t index,
+	const void *elements,
+	size_t count
+) ATTRS_NONNULL(1, 3);
+
+/**
+ * 删除一个「动态数组」中的某个元素。
+ * @param darr 目标「动态数组」的指针。
+ * @param index 被删除元素的位置索引。
+ */
+void darr_remove(
+	darr_adt *darr,
+	size_t index
+) ATTRS_NONNULL(1);
+
+/**
+ * 删除一个「动态数组」中的多个元素。
+ * @param darr 目标「动态数组」的指针。
+ * @param index 被删除元素的起始位置索引。
+ * @param count 删除元素个数，为 0 表示删除到末尾。
+ */
+void darr_remove_n(
+	darr_adt *darr,
+	size_t index,
+	size_t count
+) ATTRS_NONNULL(1);
+
+
+// ADT 操作。
+/**
+ * 克隆一个「动态数组」。浅拷贝。
+ * @param darr 目标「动态数组」的指针。
+ * @return 克隆的「动态数组」指针，克隆失败返回空指针。
+ */
+darr_adt *darr_clone(
+	const darr_adt *darr
+) ATTRS_NONNULL(1);
+
+
+// 遍历。
+/**
+ * 遍历一个「动态数组」。
+ * @param darr 目标「动态数组」的指针。
+ * @param func 遍历每个元素时执行的函数的指针。
+ */
+void darr_foreach(
+	darr_adt *darr,
+	void (*func)(void *)
+) ATTRS_NONNULL(1, 2);
+
+// 查询。
+/**
+ * 判断一个「动态数组」中，是否包含与某个元素“相等”的元素。
+ * @param darr 目标「动态数组」的指针。
+ * @param element 目标元素的指针。
+ * @param cmp 元素比较函数指针，其返回值因遵循 C 标准函数惯例。
+ * @return 包含则返回 true，不包含则返回 false。
+ */
 bool darr_contains(
-	const DArray *darr,
+	const darr_adt *darr,
 	const void *element,
-	int (*cmp)(const void *, const void *));
+	int (*cmp)(const void *, const void *)
+) ATTRS_NONNULL(1, 2, 3);
 
+/**
+ * 查找一个「动态数组」中，与某个元素“相等”的元素。
+ * @param darr 目标「动态数组」的指针。
+ * @param element 目标元素的指针。
+ * @param cmp 元素比较函数指针，其返回值因遵循 C 标准函数惯例。
+ * @param backward 是否从后往前查找。
+ * @return 查找到的元素的指针，未找到则返回空指针。
+ */
 void *darr_find(
-	DArray *darr,
+	darr_adt *darr,
 	const void *element,
 	int (*cmp)(const void *, const void *),
-	bool backward);
-const void *darr_find_const(
-		const DArray *darr,
-		const void *element,
-		int (*cmp)(const void *, const void *),
-		bool backward);
+	bool backward
+) ATTRS_NONNULL(1, 2, 3);
 
-// 排序
-void darr_sort(DArray *darr, int (*cmp)(const void *, const void *), bool desc);
+/**
+ * 使用二分查找法查找一个「动态数组」中，与某个元素“相等”的元素。
+ * @note 数组应该是有序的。
+ * @param darr 目标「动态数组」的指针。
+ * @param element 目标元素的指针。
+ * @param cmp 元素比较函数指针，其返回值因遵循 C 标准函数惯例。
+ * @param desc 数组是否是逆序排序的。
+ * @return
+ */
+void *darr_find_binary(
+	const darr_adt *darr,
+	const void *element,
+	int (*cmp)(const void *, const void *),
+	bool desc
+) ATTRS_NONNULL(1, 2, 3);
 
-// ADT 操作
-void darr_swap(DArray *darr_1, DArray *darr_2);
+// 排序。
+void darr_sort(
+	darr_adt *darr,
+	int (*cmp)(const void *, const void *),
+	bool desc
+) ATTRS_NONNULL(1, 2);
+
 
 #endif // DYNAMIC_ARRAY_H
