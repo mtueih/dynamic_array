@@ -1,10 +1,9 @@
 #include "dynamic_array.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
 #include <assert.h>
 #include <safe_calc.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* C23 标准引入了 nullptr 关键字，因此当在 C23 以下标准时将宏定义为 nullptr，否则定义为 NULL。 */
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
