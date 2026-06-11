@@ -392,7 +392,7 @@ bool darr_contains(
  * @param element 被比较元素的指针。
  * @param cmp 元素比较函数指针，其返回值因遵循 C 标准函数惯例
  * （两者相等返回 0，前者大于后者返回正值，前者小于后者返回负值）。
- * @param out_index 输出参数，返回被查找元素的索引。
+ * @param out_index 输出参数，存储查找到的索引。
  * @param backward 是否从后往前查找。
  *
  * @return 找到则返回 true，未找到则返回 false。
@@ -414,7 +414,7 @@ bool darr_find(
  * @param element 目标元素的指针。
  * @param cmp 元素比较函数指针，其返回值因遵循 C 标准函数惯例
  * （两者相等返回 0，前者大于后者返回正值，前者小于后者返回负值）。
- * @param out_index 输出参数，返回被查找元素的索引。
+ * @param out_index 输出参数，存储查找到的索引。
  * @param desc 数组是否是逆序排序的。
  *
  * @return 找到则返回 true，未找到则返回 false。
