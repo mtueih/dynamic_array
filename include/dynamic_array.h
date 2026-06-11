@@ -396,6 +396,7 @@ bool darr_contains(
  * @param element 被比较元素的指针。
  * @param cmp 元素比较函数指针，其返回值因遵循 C 标准函数惯例
  * （两者相等返回 0，前者大于后者返回正值，前者小于后者返回负值）。
+ * @param ctx 比较函数的上下文参数。
  * @param out_index 输出参数，存储查找到的索引。
  * @param backward 是否从后往前查找。
  *
@@ -404,7 +405,28 @@ bool darr_contains(
 bool darr_find(
 	darr_adt *darr,
 	const void *element,
-	int (*cmp)(const void *, const void *),
+	int (*cmp)(const void *, const void *, void *),
+	void *ctx,
+	size_t *out_index,
+	bool backward
+) ATTRS_NONNULL(1, 2, 3);
+
+/**
+ * @brief 查找一个「动态数组」中，符合某种条件的元素。
+ *
+ * @param darr 目标「动态数组」的指针。
+ * @param predicate 谓词函数，用于检查一个元素是否符合某种条件。
+ * （两者相等返回 0，前者大于后者返回正值，前者小于后者返回负值）。
+ * @param ctx 谓词函数的上下文参数。
+ * @param out_index 输出参数，存储查找到的索引。
+ * @param backward 是否从后往前查找。
+ *
+ * @return 找到则返回 true，未找到则返回 false。
+ */
+bool darr_find_if(
+	darr_adt *darr,
+	bool (*predicate)(const void *, void *),
+	void *ctx,
 	size_t *out_index,
 	bool backward
 ) ATTRS_NONNULL(1, 2, 3);
@@ -418,6 +440,7 @@ bool darr_find(
  * @param element 目标元素的指针。
  * @param cmp 元素比较函数指针，其返回值因遵循 C 标准函数惯例
  * （两者相等返回 0，前者大于后者返回正值，前者小于后者返回负值）。
+ * @param ctx 比较函数的上下文参数。
  * @param out_index 输出参数，存储查找到的索引。
  * @param desc 数组是否是逆序排序的。
  *
@@ -426,7 +449,8 @@ bool darr_find(
 bool darr_find_binary(
 	const darr_adt *darr,
 	const void *element,
-	int (*cmp)(const void *, const void *),
+	int (*cmp)(const void *, const void *, void *),
+	void *ctx,
 	size_t *out_index,
 	bool desc
 ) ATTRS_NONNULL(1, 2, 3);
@@ -443,12 +467,25 @@ bool darr_find_binary(
  * @param darr 目标「动态数组」的指针。
  * @param cmp 元素比较函数指针，其返回值因遵循 C 标准函数惯例
  * （两者相等返回 0，前者大于后者返回正值，前者小于后者返回负值）。
+ * @param ctx 比较函数的上下文参数。
  * @param desc 是否进行逆序排序。
  */
 void darr_sort(
 	darr_adt *darr,
-	int (*cmp)(const void *, const void *),
+	int (*cmp)(const void *, const void *, void *),
+	void *ctx,
 	bool desc
 ) ATTRS_NONNULL(1, 2);
+
+/* 反转。 */
+
+/**
+ * @brief 对一个「动态数组」进行反转。
+ *
+ * @param darr 目标「动态数组」的指针。
+ */
+void darr_reverse(
+	darr_adt *darr
+) ATTRS_NONNULL(1);
 
 #endif /* DYNAMIC_ARRAY_H */
