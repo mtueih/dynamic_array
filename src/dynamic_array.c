@@ -147,19 +147,21 @@ darr_adt *darr_create(
 ) {
 	darr_adt *new_darr;
 
-	// 元素大小为 0，视为创建失败，或者创建空气。
+	/* 元素大小为 0，视为创建失败，或者创建空气。 */
 	if (element_size == 0) return DARR_NULLPTR;
 
-	// 为「动态数组」容器分配内存。
+	/* 为「动态数组」容器分配内存。 */
 	new_darr = malloc(sizeof(darr_adt));
 	if (new_darr == DARR_NULLPTR) return DARR_NULLPTR;
 
-	// 初始化「动态数组」。
+	/* 初始化「动态数组」。 */
 	new_darr->em_sz = element_size;
 	new_darr->len = 0;
 
-	// 为「动态数组」预分配容量。
-	// 如果不用预分配，就初始化剩余成员变量后返回「动态数组」指针。
+	/**
+	 * 为「动态数组」预分配容量。
+	 * 如果不用预分配，就初始化剩余成员变量后返回「动态数组」指针。
+	 */
 	if (length == 0) {
 		new_darr->data = DARR_NULLPTR;
 		new_darr->min_cap = new_darr->cap = 0;
@@ -167,17 +169,19 @@ darr_adt *darr_create(
 		return new_darr;
 	}
 
-	// 调用静态函数 capacity_resize 执行分配。
-	// capacity_resize 函数应该执行实际的容量调整操作，参数指定多大就分配多大。
-	// 其本质上应该只是 realloc 函数的调用。
-	// 如果调整成功，其应该对且仅对目标「动态数组」的 data 和 cap 两个成员变量做出改动。
+	/**
+	 * 调用静态函数 capacity_resize 执行分配。
+	 * capacity_resize 函数应该执行实际的容量调整操作，参数指定多大就分配多大。
+	 * 其本质上应该只是 realloc 函数的调用。
+	 * 如果调整成功，其应该对且仅对目标「动态数组」的 data 和 cap 两个成员变量做出改动。
+	 */
 	if (!capacity_resize(new_darr, length)) {
-		// 如果分配失败，则视为「动态数组」创建失败，释放「动态数组」容器内存。
+		/* 如果分配失败，则视为「动态数组」创建失败，释放「动态数组」容器内存。 */
 		free(new_darr);
 		return DARR_NULLPTR;
 	}
 
-	// 如果分配成功，那么将成员变量「min_cap」设置为 length。（将预分配行为视为一种保底预期。）
+	/* 如果分配成功，那么将成员变量「min_cap」设置为 length。（将预分配行为视为一种保底预期。） */
 	new_darr->min_cap = length;
 
 	return new_darr;
@@ -186,24 +190,26 @@ darr_adt *darr_create(
 void darr_destroy(
 	darr_adt *const darr
 ) {
-	// 开发阶段参数检查。
+	/* 开发阶段参数检查。 */
 	assert(darr != DARR_NULLPTR);
 
-	// 如果容量不为 0，则释放。
+	/* 如果容量不为 0，则释放。 */
 	if (darr->data != DARR_NULLPTR) free(darr->data);
 
-	// 释放「动态数组」容器内存。
+	/* 释放「动态数组」容器内存。 */
 	free(darr);
 }
 
 void darr_clear(
 	darr_adt *const darr
 ) {
-	// 开发阶段参数检查。
+	/* 开发阶段参数检查。 */
 	assert(darr != DARR_NULLPTR);
 
-	// 清空「动态数组」，不会“立即”对内存以及数据做出改动。
-	// 因此只将其「长度」置为 0 即可。
+	/**
+	 * 清空「动态数组」，不会“立即”对内存以及数据做出改动。
+	 * 因此只将其「长度」置为 0 即可。
+	 */
 	darr->len = 0;
 }
 
@@ -212,7 +218,7 @@ void darr_clear(
 void *darr_carr(
 	darr_adt *const darr
 ) {
-	// 开发阶段参数检查。
+	/* 开发阶段参数检查。 */
 	assert(darr != DARR_NULLPTR);
 
 	return darr->data;
@@ -221,7 +227,7 @@ void *darr_carr(
 const void *darr_carr_const(
 	const darr_adt *const darr
 ) {
-	// 开发阶段参数检查。
+	/* 开发阶段参数检查。 */
 	assert(darr != DARR_NULLPTR);
 
 	return darr->data;
@@ -231,10 +237,10 @@ void *darr_at(
 	darr_adt *const darr,
 	const size_t index
 ) {
-	// 开发阶段参数检查。
+	/* 开发阶段参数检查。 */
 	assert(darr != DARR_NULLPTR);
 
-	// 检查索引是否越界。
+	/* 检查索引是否越界。 */
 	if (index >= darr->len) return DARR_NULLPTR;
 
 	return (char *) darr->data + index * darr->em_sz;
@@ -244,10 +250,10 @@ const void *darr_at_const(
 	const darr_adt *const darr,
 	const size_t index
 ) {
-	// 开发阶段参数检查。
+	/* 开发阶段参数检查。 */
 	assert(darr != DARR_NULLPTR);
 
-	// 检查索引是否越界。
+	/* 检查索引是否越界。 */
 	if (index >= darr->len) return DARR_NULLPTR;
 
 	return (char *) darr->data + index * darr->em_sz;
@@ -256,7 +262,7 @@ const void *darr_at_const(
 size_t darr_element_size(
 	const darr_adt *const darr
 ) {
-	// 开发阶段参数检查。
+	/* 开发阶段参数检查。 */
 	assert(darr != DARR_NULLPTR);
 
 	return darr->em_sz;
@@ -265,7 +271,7 @@ size_t darr_element_size(
 size_t darr_length(
 	const darr_adt *const darr
 ) {
-	// 开发阶段参数检查。
+	/* 开发阶段参数检查。 */
 	assert(darr != DARR_NULLPTR);
 
 	return darr->len;
@@ -274,7 +280,7 @@ size_t darr_length(
 bool darr_is_empty(
 	const darr_adt *const darr
 ) {
-	// 开发阶段参数检查。
+	/* 开发阶段参数检查。 */
 	assert(darr != DARR_NULLPTR);
 
 	return darr->len == 0;
@@ -283,7 +289,7 @@ bool darr_is_empty(
 size_t darr_capacity(
 	const darr_adt *const darr
 ) {
-	// 开发阶段参数检查。
+	/* 开发阶段参数检查。 */
 	assert(darr != DARR_NULLPTR);
 
 	return darr->cap;
@@ -293,23 +299,29 @@ int darr_set_capacity(
 	darr_adt *const darr,
 	const size_t new_capacity
 ) {
-	// 开发阶段参数检查。
+	/* 开发阶段参数检查。 */
 	assert(darr != DARR_NULLPTR);
 
-	// 调用 capacity_resize_regular 函数，执行容量调整操作。
-	// 该函数与 capacity_resize 函数不同之处在于，当目标容量为 0 时，
-	// 其单独进行释放，避免 realloc 的未定义行为。
+	/**
+	 * 调用 capacity_resize_regular 函数，执行容量调整操作。
+	 * 该函数与 capacity_resize 函数不同之处在于，当目标容量为 0 时，
+	 * 其单独进行释放，避免 realloc 的未定义行为。
+	 */
 	if (!capacity_resize_regular(darr, new_capacity)) {
-		// 如果调整失败，大概率是分配失败。（实际上如果计算溢出，那么内存分配必然会失败。）
+		/* 如果调整失败，大概率是分配失败。（实际上如果计算溢出，那么内存分配必然会失败。） */
 		return DARR_MEMORY_ALLOC_FAILED;
 	}
 
-	// 如果 capacity_resize_regular 成功，那么修改成员变量「min_cap」的值。
-	// 因为将 darr_set_capacity 函数调用行为，视为一种保底预期。
+	/**
+	 * 如果 capacity_resize_regular 成功，那么修改成员变量「min_cap」的值。
+	 * 因为将 darr_set_capacity 函数调用行为，视为一种保底预期。
+	 */
 	darr->min_cap = new_capacity;
 
-	// 如果新的容量小于先前的元素个数，那么原有内容会被截断。
-	// 因此需要更新「length」的值。
+	/**
+	 * 如果新的容量小于先前的元素个数，那么原有内容会被截断。
+	 * 因此需要更新「length」的值。
+	 */
 	if (new_capacity < darr->len) {
 		darr->len = new_capacity;
 	}
@@ -321,18 +333,20 @@ int darr_reserve(
 	darr_adt *const darr,
 	const size_t new_capacity
 ) {
-	// 开发阶段参数检查。
+	/* 开发阶段参数检查。 */
 	assert(darr != DARR_NULLPTR);
 
-	// 此函数与「darr_set_capacity」不同之处在于，此函数不会截断当前内容。
-	// 因此需要取「new_capacity」和「darr->len」的较大值来进行实际的调整。
-	// 即，当「new_capacity」小于「darr->len」时，实际相当于执行 darr_shrink_to_fit。
+	/**
+	 * 此函数与「darr_set_capacity」不同之处在于，此函数不会截断当前内容。
+	 * 因此需要取「new_capacity」和「darr->len」的较大值来进行实际的调整。
+	 * 即，当「new_capacity」小于「darr->len」时，实际相当于执行 darr_shrink_to_fit。
+	 */
 	if (!capacity_resize_regular(darr, DARR_MAX(new_capacity, darr->len))) {
-		// 如果调整失败。
+		/* 如果调整失败。 */
 		return DARR_MEMORY_ALLOC_FAILED;
 	}
 
-	// 如果 capacity_resize_regular 成功，那么修改成员变量「min_cap」的值。
+	/* 如果 capacity_resize_regular 成功，那么修改成员变量「min_cap」的值。 */
 	darr->min_cap = new_capacity;
 
 	return DARR_SUCCESS;
@@ -341,14 +355,19 @@ int darr_reserve(
 void darr_shrink_to_fit(
 	darr_adt *const darr
 ) {
-	// 开发阶段参数检查。
+	/* 开发阶段参数检查。 */
 	assert(darr != DARR_NULLPTR);
 
-	// 执行此函数，无论实际调整成功与否，都将「min_cap」的值置为 0。
-	// 因为调用此函数的行为，视为放弃保底预期。
+	/**
+	 * 执行此函数，无论实际调整成功与否，都将「min_cap」的值置为 0。
+	 * 因为调用此函数的行为，视为放弃保底预期。
+	 */
 	darr->min_cap = 0;
 
-	// 执行 capacity_resize_regular（在此函数中，成功与否并不重要，而且由于不是扩容，所以几乎不会失败）。
+	/**
+	 * 执行 capacity_resize_regular
+	 * （在此函数中，成功与否并不重要，而且由于不是扩容，所以几乎不会失败）。
+	 */
 	capacity_resize_regular(darr, darr->len);
 }
 
