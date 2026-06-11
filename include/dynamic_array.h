@@ -324,6 +324,22 @@ void darr_remove_n(
 ) ATTRS_NONNULL(1);
 
 
+/* 元素操作。 */
+
+/**
+ * @brief 交换一个「动态数组」中的两个元素。
+ *
+ * @param darr 目标「动态数组」的指针。
+ * @param index_1 第一个元素的位置索引。
+ * @param index_2 第二个元素的位置索引。
+ */
+void darr_swap(
+	darr_adt *darr,
+	size_t index_1,
+	size_t index_2
+);
+
+
 /* ADT 操作。 */
 
 /**
@@ -369,7 +385,7 @@ void darr_foreach_const(
 ) ATTRS_NONNULL(1, 2);
 
 
-/* 查询。 */
+/* 查询、查找。 */
 
 /**
  * @brief 判断一个「动态数组」中，是否包含与某个元素“相等”的元素。
@@ -456,7 +472,7 @@ bool darr_find_binary(
 ) ATTRS_NONNULL(1, 2, 3);
 
 
-/* 排序。 */
+/* 排序、反转。 */
 
 /**
  * @brief 对一个「动态数组」进行排序。
@@ -476,8 +492,6 @@ void darr_sort(
 	void *ctx,
 	bool desc
 ) ATTRS_NONNULL(1, 2);
-
-/* 反转。 */
 
 /**
  * @brief 对一个「动态数组」进行反转。
