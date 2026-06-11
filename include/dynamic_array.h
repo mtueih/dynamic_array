@@ -347,10 +347,12 @@ darr_adt *darr_clone(
  *
  * @param darr 目标「动态数组」的指针。
  * @param func 遍历每个元素时执行的函数的指针（非 const）。
+ * @param ctx 遍历函数的上下文参数。
  */
 void darr_foreach(
 	darr_adt *darr,
-	void (*func)(void *)
+	void (*func)(void *, void *),
+	void *ctx
 ) ATTRS_NONNULL(1, 2);
 
 /**
@@ -358,10 +360,12 @@ void darr_foreach(
  *
  * @param darr 目标「动态数组」的指针。
  * @param func 遍历每个元素时执行的函数的指针（const）。
+ * @param ctx 遍历函数的上下文参数。
  */
 void darr_foreach_const(
 	const darr_adt *darr,
-	void (*func)(const void *)
+	void (*func)(const void *, void *),
+	void *ctx
 ) ATTRS_NONNULL(1, 2);
 
 
