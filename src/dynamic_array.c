@@ -15,17 +15,19 @@
 #define DARR_MAX(a, b) ((a) > (b) ? (a) : (b))
 #define DARR_MIN(a, b) ((a) < (b) ? (a) : (b))
 
-// 「动态字符串」抽象数据类型定义
+/* 「动态字符串」抽象数据类型定义。 */
 struct dynamic_array {
-	// 元素相关成员变量。
-	size_t em_sz;
-	// 数组相关成员变量。
-	void *data;
-	size_t len;
-	// 容量相关成员变量。
-	// 上面的数组长度「len」以及下面的两个容量相关的成员变量，都以元素个数为单位。
-	size_t cap;
-	size_t min_cap;
+	/* 元素相关成员变量。 */
+	size_t em_sz; /* 元素大小。单个元素占用的空间大小，以字节为单位。 */
+
+	/* 数组相关成员变量。 */
+	void *data; /* 指向数据缓冲区的指针。 */
+	size_t len; /* 数组长度。元素个数。 */
+
+	/* 容量相关成员变量。 */
+	/* 上面的数组长度「len」以及下面的两个容量相关的成员变量，都以元素个数为单位。 */
+	size_t cap;     /* 数组容量。能存放的元素个数，以元素个数为单位。 */
+	size_t min_cap; /* 数组保底容量。在容量自动变化过程中维持不低于此值。 */
 };
 
 
@@ -358,7 +360,6 @@ void darr_remove_n(darr_adt *const darr, const size_t index, const size_t count)
 
 // ADT 操作。
 darr_adt *darr_clone(const darr_adt *const darr) {
-
 }
 
 // 遍历
@@ -413,13 +414,13 @@ const void *darr_find_const(
 
 // 排序
 void darr_sort(darr_adt *darr, int (*cmp)(const void *, const void *), bool desc) {
-	char *temp; // 临时分配内存
-	size_t width; // 归并排序中，子数组宽度
-	char *j, *k, *l; // 用于在循环中迭代
-	size_t i; // 用于在循环中迭代
+	char *temp;        // 临时分配内存
+	size_t width;      // 归并排序中，子数组宽度
+	char *j, *k, *l;   // 用于在循环中迭代
+	size_t i;          // 用于在循环中迭代
 	char *mid, *right; // 归并排序中，子数组的 3 个位置
-	bool src_is_data; // 归并排序中，用于乒乓策略
-	char *src, *dst; // 归并排序中，用于乒乓策略
+	bool src_is_data;  // 归并排序中，用于乒乓策略
+	char *src, *dst;   // 归并排序中，用于乒乓策略
 
 	// 参数检查
 	if (!darr || darr->len < 2 || !cmp)
