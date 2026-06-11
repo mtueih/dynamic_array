@@ -5,8 +5,9 @@
 #include <errno.h>
 #include <stddef.h>
 
+/* C23 标准移除了 stdbool.h，因此仅在 C23 以下标准时包含此文件。 */
 #if !defined(__STDC_VERSION__) || (defined(__STDC_VERSION__) && __STDC_VERSION__ < 202311L)
-#include <stdbool.h>
+#  include <stdbool.h>
 #endif
 
 // ADT 类型别名声明。

@@ -6,10 +6,11 @@
 #include <assert.h>
 #include <safe_calc.h>
 
-#if ATTRS_C_STD >= 202311L
-#define DARR_NULLPTR nullptr
+/* C23 标准引入了 nullptr 关键字，因此当在 C23 以下标准时将宏定义为 nullptr，否则定义为 NULL。 */
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
+#  define NULLPTR nullptr
 #elif
-#define DARR_NULLPTR NULL
+#  define NULLPTR NULL
 #endif
 
 #define DARR_MAX(a, b) ((a) > (b) ? (a) : (b))

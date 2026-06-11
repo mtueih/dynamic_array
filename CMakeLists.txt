@@ -15,6 +15,10 @@ add_library(dynamic_array::dynamic_array ALIAS dynamic_array)
 target_link_libraries(dynamic_array PUBLIC attrs::attrs)
 target_link_libraries(dynamic_array PRIVATE safe_calc::safe_calc)
 
+# 添加测试可执行文件（仅用于开发测试，不安装）。
+add_executable(dynamic_array_test tests/test_dynamic_array.c)
+target_link_libraries(dynamic_array_test PRIVATE dynamic_array)
+
 # 配置包含目录，使用生成器表达式：
 # - BUILD_INTERFACE：直接构建项目时使用。
 # - INSTALL_INTERFACE：使用已安装的包时使用。
@@ -22,10 +26,6 @@ target_include_directories(dynamic_array PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-
-# 添加测试可执行文件（仅用于开发测试，不安装）。
-add_executable(dynamic_array_test src/main.c)
-target_link_libraries(dynamic_array_test PRIVATE dynamic_array)
 
 # 安装头文件到标准包含目录。
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
@@ -49,7 +49,7 @@ install(EXPORT dynamic_arrayTargets
 	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/dynamic_array
 )
 
-# 从模板生成包配置文件。
+# 从模板（dynamic_arrayConfig.cmake）生成包配置文件。
 configure_package_config_file(
 	${CMAKE_CURRENT_SOURCE_DIR}/cmake/dynamic_arrayConfig.cmake.in
 	${CMAKE_CURRENT_BINARY_DIR}/dynamic_arrayConfig.cmake
