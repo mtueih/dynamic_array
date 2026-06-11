@@ -27,7 +27,6 @@ enum {
  ******************    API 函数原型（声明）。    ******************
  **************************************************************/
 
-
 /* 创建、销毁、清空。 */
 
 /**
@@ -66,7 +65,6 @@ void darr_destroy(
 void darr_clear(
 	darr_adt *darr
 ) ATTRS_NONNULL(1);
-
 
 /* 属性获取与设置，以及元素访问。 */
 
@@ -208,7 +206,6 @@ void darr_shrink_to_fit(
 	darr_adt *darr
 ) ATTRS_NONNULL(1);
 
-
 /* 增减元素。 */
 
 /**
@@ -323,7 +320,6 @@ void darr_remove_n(
 	size_t count
 ) ATTRS_NONNULL(1);
 
-
 /* 元素操作。 */
 
 /**
@@ -339,7 +335,6 @@ void darr_swap(
 	size_t index_2
 );
 
-
 /* ADT 操作。 */
 
 /**
@@ -354,7 +349,6 @@ void darr_swap(
 darr_adt *darr_clone(
 	const darr_adt *darr
 ) ATTRS_NONNULL(1);
-
 
 /* 遍历。 */
 
@@ -384,7 +378,6 @@ void darr_foreach_const(
 	void *ctx
 ) ATTRS_NONNULL(1, 2);
 
-
 /* 查询、查找。 */
 
 /**
@@ -394,6 +387,7 @@ void darr_foreach_const(
  * @param element 被比较元素的指针。
  * @param cmp 元素比较函数指针，其返回值因遵循 C 标准函数惯例
  * （两者相等返回 0，前者大于后者返回正值，前者小于后者返回负值）。
+ * @param ctx 比较函数的上下文参数。
  * @param backward 是否从后往前查找。
  *
  * @return 包含则返回 true，不包含则返回 false。
@@ -401,7 +395,8 @@ void darr_foreach_const(
 bool darr_contains(
 	const darr_adt *darr,
 	const void *element,
-	int (*cmp)(const void *, const void *),
+	int (*cmp)(const void *, const void *, void *),
+	void *ctx,
 	bool backward
 ) ATTRS_NONNULL(1, 2, 3);
 
@@ -470,7 +465,6 @@ bool darr_find_binary(
 	size_t *out_index,
 	bool desc
 ) ATTRS_NONNULL(1, 2, 3);
-
 
 /* 排序、反转。 */
 

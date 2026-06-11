@@ -7,13 +7,14 @@
 
 /* C23 标准引入了 nullptr 关键字，因此当在 C23 以下标准时将宏定义为 nullptr，否则定义为 NULL。 */
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
-#  define NULLPTR nullptr
-#elif
-#  define NULLPTR NULL
+#  define DARR_NULLPTR nullptr
+#else
+#  define DARR_NULLPTR NULL
 #endif
 
 #define DARR_MAX(a, b) ((a) > (b) ? (a) : (b))
 #define DARR_MIN(a, b) ((a) < (b) ? (a) : (b))
+
 
 /* 「动态字符串」抽象数据类型定义。 */
 struct dynamic_array {
@@ -31,72 +32,119 @@ struct dynamic_array {
 };
 
 
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define EM_MEMMOVE(dst, src, dst_pos, src_pos, em_size, len) memmove((char *)(dst) + (dst_pos) * (em_size), (char *)(src) + (src_pos) * (em_size), (len) * (em_size))
-#define EM_MEMCPY(dst, src, dst_pos, src_pos, em_size, len) memcpy((char *)(dst) + (dst_pos) * (em_size), (char *)(src) + (src_pos) * (em_size), (len) * (em_size))
-// #define ARG_CHECK(exp, v) if(exp) return v;
-#define EMS_MOVE(darr, end, start) memove((char *)((darr)->data) + (end) * ((darr)->em_sz), (char *)((darr)->data) + (start) * ((darr)->em_sz), (((darr)->len) - (start)) * ((darr)->em_sz))
+// #define MIN(a, b) ((a) < (b) ? (a) : (b))
+// #define EM_MEMMOVE(dst, src, dst_pos, src_pos, em_size, len) memmove((char *)(dst) + (dst_pos) * (em_size), (char *)(src) + (src_pos) * (em_size), (len) * (em_size))
+// #define EM_MEMCPY(dst, src, dst_pos, src_pos, em_size, len) memcpy((char *)(dst) + (dst_pos) * (em_size), (char *)(src) + (src_pos) * (em_size), (len) * (em_size))
+// // #define ARG_CHECK(exp, v) if(exp) return v;
+// #define EMS_MOVE(darr, end, start) memove((char *)((darr)->data) + (end) * ((darr)->em_sz), (char *)((darr)->data) + (start) * ((darr)->em_sz), (((darr)->len) - (start)) * ((darr)->em_sz))
 
-// 静态函数声明
-// 动态调整容量
+
+/***************************************************************
+ *********************    静态函数声明。    **********************
+ **************************************************************/
+
+/* 容量调整。 */
+
 /**
- * 调整一个「动态数组」的容量。本质上就是 realloc 的封装。
- * 会执行乘法溢出判断。
- * @warning new_len 不能为 0，否则可能导致未定义行为。
+ * @brief 调整一个「动态数组」的容量。
+ *
+ * @note 本质上就是 realloc 的封装。会执行乘法溢出判断。
+ *
  * @param darr 目标「动态数组」指针。
  * @param new_len 目标容量长度（以元素个数为单位而不是字节）。不能为 0。
+ *
  * @return 调整成功返回 true，失败返回 false。
  */
-static bool capacity_resize(darr_adt *darr, size_t new_len);
+static bool capacity_resize(
+	darr_adt *darr,
+	size_t new_len
+);
 
 /**
- * 常规调整一个「动态数组」的容量。
- * 与 capacity_resize 不同之处在于，参数 new_len 可为 0，届时会单独进行释放，避免 realloc 未定义行为。
+ * @brief 常规调整一个「动态数组」的容量。
+ *
+ * @note 与 capacity_resize 不同之处在于，参数 new_len 可为 0，届时会单独进行释放，避免 realloc 未定义行为。
+ *
  * @param darr 目标「动态数组」指针。
  * @param new_len 目标容量长度（以元素个数为单位而不是字节）。
+ *
  * @return 调整成功返回 true，失败返回 false。
  */
-static bool capacity_resize_regular(darr_adt *darr, size_t new_len);
+static bool capacity_resize_regular(
+	darr_adt *darr,
+	size_t new_len
+);
 
 /**
- * 动态调整一个「动态数组」的容量。
- * 会进行预分配和延迟兼容，以摊销 realloc 函数调用开销。
+ * @brief 动态调整一个「动态数组」的容量。
+ *
+ * @note 会进行预分配和延迟减容，以摊销 realloc 函数调用开销。
+ *
  * @param darr 目标「动态数组」指针。
  * @param new_len 目标容量长度（以元素个数为单位而不是字节）。
+ *
  * @return 调整成功返回 true，失败返回 false。
  */
-static bool capacity_resize_dynamic(darr_adt *darr, size_t new_len);
+static bool capacity_resize_dynamic(
+	darr_adt *darr,
+	size_t new_len
+);
+
+/* 元素操作。 */
 
 /**
- * 插入若干元素到一个「动态数组」中。
- * 将繁琐的，容易出错的 memmove 和 memcpy 操作封装成一个函数。
+ * @brief 插入若干元素到一个「动态数组」中。
+ *
+ * @note 将繁琐的，容易出错的 memmove 和 memcpy 操作封装成一个函数。
+ *
  * @param darr 目标「动态数组」指针。
  * @param index 目标位置索引。
  * @param elements 被插入元素起始指针。
  * @param count 插入元素个数。
+ *
  * @return 全局状态码。
  */
-static int elements_insert(darr_adt *darr, size_t index, const void *elements, size_t count);
+static int elements_insert(
+	darr_adt *darr,
+	size_t index,
+	const void *elements,
+	size_t count
+);
 
 /**
- * 删除一个「动态数组」中的若干元素。
+ * @brief 删除一个「动态数组」中的若干元素。
+ *
  * @param darr 目标「动态数组」指针。
  * @param index 被删除元素起始位置索引。
  * @param count 删除元素个数。
  */
-static void elements_remove(darr_adt *darr, size_t index, size_t count);
+static void elements_remove(
+	darr_adt *darr,
+	size_t index,
+	size_t count
+);
 
-static bool resize_cap(darr_adt *darr, size_t new_len);
 
-// 实际调整容量
-static bool resize_cap_actual(darr_adt *darr, size_t new_cap);
+// static bool resize_cap(darr_adt *darr, size_t new_len);
+//
+// // 实际调整容量
+// static bool resize_cap_actual(darr_adt *darr, size_t new_cap);
+//
+// static size_t calculate_adjusted_cap(const darr_adt *darr, size_t needed_len);
+//
+// // static bool resize_cap2(DArray *darr, size_t new_cap);
 
-static size_t calculate_adjusted_cap(const darr_adt *darr, size_t needed_len);
 
-// static bool resize_cap2(DArray *darr, size_t new_cap);
+/***************************************************************
+ *********************    API 函数定义。    *********************
+ **************************************************************/
 
-// 创建，销毁，清空。
-darr_adt *darr_create(const size_t element_size, const size_t length) {
+/* 创建，销毁，清空。 */
+
+darr_adt *darr_create(
+	const size_t element_size,
+	const size_t length
+) {
 	darr_adt *new_darr;
 
 	// 元素大小为 0，视为创建失败，或者创建空气。
@@ -135,7 +183,9 @@ darr_adt *darr_create(const size_t element_size, const size_t length) {
 	return new_darr;
 }
 
-void darr_destroy(darr_adt *const darr) {
+void darr_destroy(
+	darr_adt *const darr
+) {
 	// 开发阶段参数检查。
 	assert(darr != DARR_NULLPTR);
 
@@ -146,7 +196,9 @@ void darr_destroy(darr_adt *const darr) {
 	free(darr);
 }
 
-void darr_clear(darr_adt *const darr) {
+void darr_clear(
+	darr_adt *const darr
+) {
 	// 开发阶段参数检查。
 	assert(darr != DARR_NULLPTR);
 
@@ -155,16 +207,30 @@ void darr_clear(darr_adt *const darr) {
 	darr->len = 0;
 }
 
+/* 属性获取与设置，以及元素访问。 */
 
-// 属性获取与设置，以及元素访问。
-void *darr_carr(darr_adt *const darr) {
+void *darr_carr(
+	darr_adt *const darr
+) {
 	// 开发阶段参数检查。
 	assert(darr != DARR_NULLPTR);
 
 	return darr->data;
 }
 
-void *darr_at(darr_adt *const darr, const size_t index) {
+const void *darr_carr_const(
+	const darr_adt *const darr
+) {
+	// 开发阶段参数检查。
+	assert(darr != DARR_NULLPTR);
+
+	return darr->data;
+}
+
+void *darr_at(
+	darr_adt *const darr,
+	const size_t index
+) {
 	// 开发阶段参数检查。
 	assert(darr != DARR_NULLPTR);
 
@@ -174,35 +240,59 @@ void *darr_at(darr_adt *const darr, const size_t index) {
 	return (char *) darr->data + index * darr->em_sz;
 }
 
-size_t darr_element_size(const darr_adt *const darr) {
+const void *darr_at_const(
+	const darr_adt *const darr,
+	const size_t index
+) {
+	// 开发阶段参数检查。
+	assert(darr != DARR_NULLPTR);
+
+	// 检查索引是否越界。
+	if (index >= darr->len) return DARR_NULLPTR;
+
+	return (char *) darr->data + index * darr->em_sz;
+}
+
+size_t darr_element_size(
+	const darr_adt *const darr
+) {
 	// 开发阶段参数检查。
 	assert(darr != DARR_NULLPTR);
 
 	return darr->em_sz;
 }
 
-size_t darr_length(const darr_adt *const darr) {
+size_t darr_length(
+	const darr_adt *const darr
+) {
 	// 开发阶段参数检查。
 	assert(darr != DARR_NULLPTR);
 
 	return darr->len;
 }
 
-bool darr_is_empty(const darr_adt *const darr) {
+bool darr_is_empty(
+	const darr_adt *const darr
+) {
 	// 开发阶段参数检查。
 	assert(darr != DARR_NULLPTR);
 
 	return darr->len == 0;
 }
 
-size_t darr_capacity(const darr_adt *const darr) {
+size_t darr_capacity(
+	const darr_adt *const darr
+) {
 	// 开发阶段参数检查。
 	assert(darr != DARR_NULLPTR);
 
 	return darr->cap;
 }
 
-int darr_set_capacity(darr_adt *const darr, const size_t new_capacity) {
+int darr_set_capacity(
+	darr_adt *const darr,
+	const size_t new_capacity
+) {
 	// 开发阶段参数检查。
 	assert(darr != DARR_NULLPTR);
 
@@ -227,7 +317,10 @@ int darr_set_capacity(darr_adt *const darr, const size_t new_capacity) {
 	return DARR_SUCCESS;
 }
 
-int darr_reserve(darr_adt *const darr, const size_t new_capacity) {
+int darr_reserve(
+	darr_adt *const darr,
+	const size_t new_capacity
+) {
 	// 开发阶段参数检查。
 	assert(darr != DARR_NULLPTR);
 
@@ -245,7 +338,9 @@ int darr_reserve(darr_adt *const darr, const size_t new_capacity) {
 	return DARR_SUCCESS;
 }
 
-void darr_shrink_to_fit(darr_adt *const darr) {
+void darr_shrink_to_fit(
+	darr_adt *const darr
+) {
 	// 开发阶段参数检查。
 	assert(darr != DARR_NULLPTR);
 
@@ -257,9 +352,12 @@ void darr_shrink_to_fit(darr_adt *const darr) {
 	capacity_resize_regular(darr, darr->len);
 }
 
+/* 增减元素。 */
 
-// 增减元素。
-int darr_append(darr_adt *const darr, const void *const element) {
+int darr_append(
+	darr_adt *const darr,
+	const void *const element
+) {
 	// 开发阶段参数检查。
 	assert(darr != DARR_NULLPTR);
 	assert(element != DARR_NULLPTR);
@@ -271,7 +369,11 @@ int darr_append(darr_adt *const darr, const void *const element) {
 	return elements_insert(darr, darr->len, element, 1);
 }
 
-int darr_append_n(darr_adt *const darr, const void *const elements, const size_t count) {
+int darr_append_n(
+	darr_adt *const darr,
+	const void *const elements,
+	const size_t count
+) {
 	// 开发阶段参数检查。
 	assert(darr != DARR_NULLPTR);
 	assert(elements != DARR_NULLPTR);
@@ -284,7 +386,10 @@ int darr_append_n(darr_adt *const darr, const void *const elements, const size_t
 	return elements_insert(darr, darr->len, elements, count);
 }
 
-int darr_prepend(darr_adt *const darr, const void *const element) {
+int darr_prepend(
+	darr_adt *const darr,
+	const void *const element
+) {
 	// 开发阶段参数检查。
 	assert(darr != DARR_NULLPTR);
 	assert(element != DARR_NULLPTR);
@@ -293,7 +398,11 @@ int darr_prepend(darr_adt *const darr, const void *const element) {
 	return elements_insert(darr, 0, element, 1);
 }
 
-int darr_prepend_n(darr_adt *const darr, const void *const elements, const size_t count) {
+int darr_prepend_n(
+	darr_adt *const darr,
+	const void *const elements,
+	const size_t count
+) {
 	// 开发阶段参数检查。
 	assert(darr != DARR_NULLPTR);
 	assert(elements != DARR_NULLPTR);
@@ -306,7 +415,11 @@ int darr_prepend_n(darr_adt *const darr, const void *const elements, const size_
 	return elements_insert(darr, 0, elements, count);
 }
 
-int darr_insert(darr_adt *const darr, const size_t index, const void *const element) {
+int darr_insert(
+	darr_adt *const darr,
+	const size_t index,
+	const void *const element
+) {
 	// 开发阶段参数检查。
 	assert(darr != DARR_NULLPTR);
 	assert(element != DARR_NULLPTR);
@@ -319,7 +432,12 @@ int darr_insert(darr_adt *const darr, const size_t index, const void *const elem
 	return elements_insert(darr, index, element, 1);
 }
 
-int darr_insert_n(darr_adt *const darr, const size_t index, const void *const elements, const size_t count) {
+int darr_insert_n(
+	darr_adt *const darr,
+	const size_t index,
+	const void *const elements,
+	const size_t count
+) {
 	// 开发阶段参数检查。
 	assert(darr != DARR_NULLPTR);
 	assert(elements != DARR_NULLPTR);
@@ -334,7 +452,10 @@ int darr_insert_n(darr_adt *const darr, const size_t index, const void *const el
 	return elements_insert(darr, index, elements, count);
 }
 
-void darr_remove(darr_adt *const darr, const size_t index) {
+void darr_remove(
+	darr_adt *const darr,
+	const size_t index
+) {
 	// 开发阶段参数检查。
 	assert(darr != DARR_NULLPTR);
 
@@ -345,7 +466,11 @@ void darr_remove(darr_adt *const darr, const size_t index) {
 	elements_remove(darr, index, 1);
 }
 
-void darr_remove_n(darr_adt *const darr, const size_t index, const size_t count) {
+void darr_remove_n(
+	darr_adt *const darr,
+	const size_t index,
+	const size_t count
+) {
 	// 开发阶段参数检查。
 	assert(darr != DARR_NULLPTR);
 
@@ -358,12 +483,57 @@ void darr_remove_n(darr_adt *const darr, const size_t index, const size_t count)
 	elements_remove(darr, index, count);
 }
 
-// ADT 操作。
-darr_adt *darr_clone(const darr_adt *const darr) {
+/* 元素操作。 */
+
+void darr_swap(
+	darr_adt *darr,
+	size_t index_1,
+	size_t index_2
+) {
 }
 
-// 遍历
-void darr_foreach(darr_adt *darr, void (*func)(void *)) {
+/* ADT 操作。 */
+
+darr_adt *darr_clone(
+	const darr_adt *const darr
+) {
+	void *new_data;
+	darr_adt *new_darr;
+
+	if (!darr || !darr->em_sz)
+		return NULL;
+
+	new_data = NULL;
+
+	if (darr->cap) {
+		if (!(new_data = malloc(darr->cap)))
+			return NULL;
+	}
+
+	if (!(new_darr = malloc(sizeof(darr_adt)))) {
+		if (new_data)
+			free(new_data);
+		return NULL;
+	}
+
+	if (new_data)
+		memcpy(new_data, darr->data, darr->cap);
+
+	*new_darr = *darr;
+	if (new_data) {
+		new_darr->data = new_data;
+	}
+
+	return new_darr;
+}
+
+/* 遍历。 */
+
+void darr_foreach(
+	darr_adt *darr,
+	void (*func)(void *, void *),
+	void *ctx
+) {
 	char *p;
 
 	if (!darr || !darr->len || !func)
@@ -374,16 +544,30 @@ void darr_foreach(darr_adt *darr, void (*func)(void *)) {
 	}
 }
 
-void darr_foreach_const(const darr_adt *darr, void (*func)(const void *)) {
+void darr_foreach_const(
+	const darr_adt *darr,
+	void (*func)(const void *, void *),
+	void *ctx
+) {
 	darr_foreach(darr, func);
 }
 
-// 查询
-bool darr_contains(const darr_adt *darr, const void *element, int (*cmp)(const void *, const void *)) {
+/* 查询、查找。 */
+
+bool darr_contains(
+	const darr_adt *darr,
+	const void *element,
+	int (*cmp)(const void *, const void *, void *),
+	void *ctx,
+	bool backward
+) {
 	return darr_find_const(darr, element, cmp, false) != NULL;
 }
 
-void *darr_find(darr_adt *darr, const void *element, int (*cmp)(const void *, const void *), bool backward) {
+bool darr_find(
+	darr_adt *darr, const void *element, int (*cmp)(const void *, const void *, void *),
+	void *ctx, size_t *out_index, bool backward
+) {
 	char *p;
 
 	if (!darr || !darr->len || !element || !cmp)
@@ -406,14 +590,33 @@ void *darr_find(darr_adt *darr, const void *element, int (*cmp)(const void *, co
 	return NULL;
 }
 
-const void *darr_find_const(
-	const darr_adt *darr, const void *element, int (*cmp)(const void *, const void *), bool backward
+bool darr_find_if(
+	darr_adt *darr,
+	bool (*predicate)(const void *, void *),
+	void *ctx,
+	size_t *out_index,
+	bool backward
 ) {
-	return darr_find(darr, element, cmp, backward);
 }
 
-// 排序
-void darr_sort(darr_adt *darr, int (*cmp)(const void *, const void *), bool desc) {
+bool darr_find_binary(
+	const darr_adt *darr,
+	const void *element,
+	int (*cmp)(const void *, const void *, void *),
+	void *ctx,
+	size_t *out_index,
+	bool desc
+) {
+}
+
+/* 排序、反转。 */
+
+void darr_sort(
+	darr_adt *darr,
+	int (*cmp)(const void *, const void *, void *),
+	void *ctx,
+	bool desc
+) {
 	char *temp;        // 临时分配内存
 	size_t width;      // 归并排序中，子数组宽度
 	char *j, *k, *l;   // 用于在循环中迭代
@@ -505,22 +708,150 @@ selection_sort: {
 	}
 }
 
-// ADT 操作
-void darr_swap(darr_adt *darr_1, darr_adt *darr_2) {
-	darr_adt temp;
-
-	if (!darr_1 || !darr_2 || darr_1->em_sz != darr_2->em_sz)
-		return;
-
-	temp = *darr_1;
-	*darr_1 = *darr_2;
-	*darr_2 = temp;
+void darr_reverse(
+	darr_adt *darr
+) {
 }
 
-/******************************************************************************
-************************       静态函数实现       *******************************
-******************************************************************************/
-static bool capacity_resize(darr_adt *const darr, const size_t new_len) {
+
+// static size_t calculate_adjusted_cap(const darr_adt *darr, size_t needed_len) {
+// 	size_t new_cap, adj_cap;
+//
+// 	new_cap = needed_len * darr->em_sz;
+// 	new_cap = MIN(new_cap, darr->min_cap);
+//
+// 	// 容量需求增加，动态向上扩容
+// 	if (new_cap > darr->cap) {
+// 		// 为需求容量的 1.5 倍
+// 		adj_cap = new_cap + new_cap >> 1;
+// 	}
+// 	// 延迟减容
+// 	// 当新的所需容量达到当前容量的 1/4 时，才实际减容
+// 	else if (new_cap < darr->cap >> 2) {
+// 		// 只减一半
+// 		adj_cap = new_cap << 1;
+// 	} else {
+// 		// 无需减容
+// 		return darr->cap;
+// 	}
+//
+// 	adj_cap = adj_cap % sizeof(void *) == 0
+// 			  ? adj_cap
+// 			  : (adj_cap / sizeof(void *) + 1) * sizeof(void *);
+//
+// 	return adj_cap;
+// }
+
+// static bool resize_cap_actual(darr_adt *darr, size_t new_cap) {
+// 	void *new_data;
+//
+// 	if (new_cap == darr->cap)
+// 		return true;
+//
+// 	if (!new_cap) {
+// 		if (darr->data) {
+// 			free(darr->data);
+// 			darr->data = NULL;
+// 			darr->cap = 0;
+// 		}
+// 		return true;
+// 	}
+//
+// 	if (!(new_data = realloc(darr->data, new_cap))) {
+// 		return false;
+// 	}
+//
+// 	darr->data = new_data;
+// 	darr->cap = new_cap;
+// 	return true;
+// }
+
+
+// darr_adt *darr_create_from_carr(size_t elem_size, size_t length, const void *carr, size_t count) {
+// 	void *new_data;
+// 	darr_adt *new_darr;
+//
+// 	if (!elem_size || !carr || !length || length < count)
+// 		return NULL;
+//
+// 	new_data = NULL;
+//
+// 	if (!(new_data = malloc(length * elem_size)))
+// 		return NULL;
+//
+// 	if (!(new_darr = malloc(sizeof(darr_adt)))) {
+// 		free(new_data);
+// 		return NULL;
+// 	}
+//
+// 	memcpy(new_data, carr, count * elem_size);
+//
+// 	*new_darr = (darr_adt){.em_sz = elem_size};
+// 	if (new_data) {
+// 		new_darr->data = new_data;
+// 		new_darr->len = count;
+// 		new_darr->min_cap = new_darr->cap = length;
+// 	}
+//
+// 	return new_darr;
+// }
+
+
+// int darr_assign_carr(darr_adt *darr, const void *carr, size_t count) {
+// 	void *new_data;
+//
+// 	if (!darr || !darr->em_sz || !carr || !count)
+// 		return DARR_ARG_INVAL;
+//
+// 	if (darr->cap < count * darr->em_sz) {
+// 		if (!resize_cap(darr, count)) {
+// 			return DARR_MEM_LOC_FAILD;
+// 		}
+// 	}
+//
+// 	EM_MEMCPY(darr->data, carr, 0, 0, darr->em_sz, count);
+// 	// memcpy(darr->data, carr, count * darr->em_sz);
+// 	darr->len = count;
+// 	return DARR_SUCCESS;
+// }
+
+// int darr_assign(darr_adt *dst, const darr_adt *src) {
+// 	void *new_data;
+//
+// 	if (!dst || !dst->em_sz || !src || dst->em_sz != src->em_sz)
+// 		return DARR_ARG_INVAL;
+//
+// 	if (dst->cap < src->len * dst->em_sz) {
+// 		if (!resize_cap(dst, src->len)) {
+// 			return DARR_MEM_LOC_FAILD;
+// 		}
+// 	}
+//
+// 	EM_MEMCPY(dst->data, src->data, 0, 0, dst->em_sz, src->len);
+// 	// memcpy(dst->data, src->data, src->len * dst->em_sz);
+// 	dst->len = src->len;
+// 	return DARR_SUCCESS;
+// }
+
+// static bool resize_cap(darr_adt *darr, size_t new_len) {
+// 	if (!resize_cap_actual(darr, calculate_adjusted_cap(darr, new_len))
+// 	    && !resize_cap_actual(darr, new_len * darr->em_sz)
+// 	)
+// 		return false;
+// 	return true;
+// }
+
+
+/***************************************************************
+ *********************    静态函数实现。    **********************
+ **************************************************************/
+
+/* 容量调整。 */
+
+static bool capacity_resize(
+	darr_adt *const darr,
+	const size_t new_len
+) {
 	void *new_data;
 	size_t new_size;
 
@@ -542,7 +873,10 @@ static bool capacity_resize(darr_adt *const darr, const size_t new_len) {
 	return true;
 }
 
-static bool capacity_resize_regular(darr_adt *const darr, const size_t new_len) {
+static bool capacity_resize_regular(
+	darr_adt *const darr,
+	const size_t new_len
+) {
 	// 如果 new_len 为 0，单独进行释放，避免 realloc 的未定义行为。
 	if (new_len == 0) {
 		if (darr->data != DARR_NULLPTR) {
@@ -558,7 +892,10 @@ static bool capacity_resize_regular(darr_adt *const darr, const size_t new_len) 
 	return capacity_resize(darr, new_len);
 }
 
-static bool capacity_resize_dynamic(darr_adt *const darr, const size_t new_len) {
+static bool capacity_resize_dynamic(
+	darr_adt *const darr,
+	const size_t new_len
+) {
 	size_t needed_len; // MAX(new_len, darr->min_cap)
 	size_t adjusted_len;
 
@@ -597,7 +934,14 @@ static bool capacity_resize_dynamic(darr_adt *const darr, const size_t new_len) 
 	return capacity_resize(darr, needed_len);
 }
 
-static int elements_insert(darr_adt *const darr, const size_t index, const void *const elements, const size_t count) {
+/* 元素操作。 */
+
+static int elements_insert(
+	darr_adt *const darr,
+	const size_t index,
+	const void *const elements,
+	const size_t count
+) {
 	size_t new_len; // darr->len + count
 
 	// 安全执行 size_t 加法（darr->len + count），防止溢出。
@@ -636,7 +980,11 @@ static int elements_insert(darr_adt *const darr, const size_t index, const void 
 	return DARR_SUCCESS;
 }
 
-static void elements_remove(darr_adt *const darr, const size_t index, const size_t count) {
+static void elements_remove(
+	darr_adt *const darr,
+	const size_t index,
+	const size_t count
+) {
 	// 如果被删除的元素不在末尾，就需要移动后面的元素。
 	if (count && index + count < darr->len) {
 		memmove(
@@ -651,162 +999,4 @@ static void elements_remove(darr_adt *const darr, const size_t index, const size
 
 	// 动态减容。
 	capacity_resize_dynamic(darr, darr->len);
-}
-
-
-static size_t calculate_adjusted_cap(const darr_adt *darr, size_t needed_len) {
-	size_t new_cap, adj_cap;
-
-	new_cap = needed_len * darr->em_sz;
-	new_cap = MIN(new_cap, darr->min_cap);
-
-	// 容量需求增加，动态向上扩容
-	if (new_cap > darr->cap) {
-		// 为需求容量的 1.5 倍
-		adj_cap = new_cap + new_cap >> 1;
-	}
-	// 延迟减容
-	// 当新的所需容量达到当前容量的 1/4 时，才实际减容
-	else if (new_cap < darr->cap >> 2) {
-		// 只减一半
-		adj_cap = new_cap << 1;
-	} else {
-		// 无需减容
-		return darr->cap;
-	}
-
-	adj_cap = adj_cap % sizeof(void *) == 0
-			  ? adj_cap
-			  : (adj_cap / sizeof(void *) + 1) * sizeof(void *);
-
-	return adj_cap;
-}
-
-static bool resize_cap_actual(darr_adt *darr, size_t new_cap) {
-	void *new_data;
-
-	if (new_cap == darr->cap)
-		return true;
-
-	if (!new_cap) {
-		if (darr->data) {
-			free(darr->data);
-			darr->data = NULL;
-			darr->cap = 0;
-		}
-		return true;
-	}
-
-	if (!(new_data = realloc(darr->data, new_cap))) {
-		return false;
-	}
-
-	darr->data = new_data;
-	darr->cap = new_cap;
-	return true;
-}
-
-
-darr_adt *darr_create_from_carr(size_t elem_size, size_t length, const void *carr, size_t count) {
-	void *new_data;
-	darr_adt *new_darr;
-
-	if (!elem_size || !carr || !length || length < count)
-		return NULL;
-
-	new_data = NULL;
-
-	if (!(new_data = malloc(length * elem_size)))
-		return NULL;
-
-	if (!(new_darr = malloc(sizeof(darr_adt)))) {
-		free(new_data);
-		return NULL;
-	}
-
-	memcpy(new_data, carr, count * elem_size);
-
-	*new_darr = (darr_adt){.em_sz = elem_size};
-	if (new_data) {
-		new_darr->data = new_data;
-		new_darr->len = count;
-		new_darr->min_cap = new_darr->cap = length;
-	}
-
-	return new_darr;
-}
-
-darr_adt *darr_clone(const darr_adt *darr) {
-	void *new_data;
-	darr_adt *new_darr;
-
-	if (!darr || !darr->em_sz)
-		return NULL;
-
-	new_data = NULL;
-
-	if (darr->cap) {
-		if (!(new_data = malloc(darr->cap)))
-			return NULL;
-	}
-
-	if (!(new_darr = malloc(sizeof(darr_adt)))) {
-		if (new_data)
-			free(new_data);
-		return NULL;
-	}
-
-	if (new_data)
-		memcpy(new_data, darr->data, darr->cap);
-
-	*new_darr = *darr;
-	if (new_data) {
-		new_darr->data = new_data;
-	}
-
-	return new_darr;
-}
-
-int darr_assign_carr(darr_adt *darr, const void *carr, size_t count) {
-	void *new_data;
-
-	if (!darr || !darr->em_sz || !carr || !count)
-		return DARR_ARG_INVAL;
-
-	if (darr->cap < count * darr->em_sz) {
-		if (!resize_cap(darr, count)) {
-			return DARR_MEM_LOC_FAILD;
-		}
-	}
-
-	EM_MEMCPY(darr->data, carr, 0, 0, darr->em_sz, count);
-	// memcpy(darr->data, carr, count * darr->em_sz);
-	darr->len = count;
-	return DARR_SUCCESS;
-}
-
-int darr_assign(darr_adt *dst, const darr_adt *src) {
-	void *new_data;
-
-	if (!dst || !dst->em_sz || !src || dst->em_sz != src->em_sz)
-		return DARR_ARG_INVAL;
-
-	if (dst->cap < src->len * dst->em_sz) {
-		if (!resize_cap(dst, src->len)) {
-			return DARR_MEM_LOC_FAILD;
-		}
-	}
-
-	EM_MEMCPY(dst->data, src->data, 0, 0, dst->em_sz, src->len);
-	// memcpy(dst->data, src->data, src->len * dst->em_sz);
-	dst->len = src->len;
-	return DARR_SUCCESS;
-}
-
-static bool resize_cap(darr_adt *darr, size_t new_len) {
-	if (!resize_cap_actual(darr, calculate_adjusted_cap(darr, new_len))
-	    && !resize_cap_actual(darr, new_len * darr->em_sz)
-	)
-		return false;
-	return true;
 }
