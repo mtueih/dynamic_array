@@ -23,7 +23,7 @@
 
 
 /* 「动态字符串」抽象数据类型定义。 */
-struct dynamic_array {
+struct ATTRS_MAYBE_UNUSED dynamic_array {
 	/* 元素相关成员变量。 */
 	size_t em_sz; /* 元素大小。单个元素占用的空间大小，以字节为单位。 */
 
