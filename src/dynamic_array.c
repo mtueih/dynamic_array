@@ -232,7 +232,7 @@ void *darr_at(
 	/* 检查索引是否越界。 */
 	if (index >= darr->len) return DARR_NULLPTR;
 
-	return (char *) darr->data + index * darr->em_sz;
+	return DARR_EM_AT(darr, index);
 }
 
 const void *darr_at_const(
@@ -245,7 +245,7 @@ const void *darr_at_const(
 	/* 检查索引是否越界。 */
 	if (index >= darr->len) return DARR_NULLPTR;
 
-	return (char *) darr->data + index * darr->em_sz;
+	return DARR_EM_AT(darr, index);
 }
 
 size_t darr_element_size(
