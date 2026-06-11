@@ -340,7 +340,7 @@ void darr_swap(
 /**
  * @brief 克隆一个「动态数组」。
  *
- * @note 函数默认是浅拷贝的。
+ * @note 函数默认是浅拷贝的，会将拷贝所有元素。
  *
  * @param darr 目标「动态数组」的指针。
  *
@@ -440,7 +440,7 @@ bool darr_find_if(
 	void *ctx,
 	size_t *out_index,
 	bool backward
-) ATTRS_NONNULL(1, 2, 3);
+) ATTRS_NONNULL(1, 2);
 
 /**
  * @brief 使用二分查找法查找一个「动态数组」中，与某个元素“相等”的元素。
@@ -471,8 +471,9 @@ bool darr_find_binary(
 /**
  * @brief 对一个「动态数组」进行排序。
  *
- * @note 该函数默认使用稳定的排序算法。并且混合使用「归并排序」与「快速排序」。
- * 如果在使用「归并排序」的过程中，出现内存不足的问题，则会回退到「快速排序」。
+ * @note 该函数默认使用稳定的排序算法。并且混合使用「归并排序」与「插入排序」。
+ * 当数组元素个数大于一个叫「递归截止点」（通常介于 16 ~ 64 之间）的值时，使用「归并排序」，否则使用「插入排序」。
+ * 如果在使用「归并排序」的过程中，出现内存不足的问题，则会回退到「插入排序」。
  *
  * @param darr 目标「动态数组」的指针。
  * @param cmp 元素比较函数指针，其返回值因遵循 C 标准函数惯例
@@ -491,8 +492,10 @@ void darr_sort(
  * @brief 对一个「动态数组」进行反转。
  *
  * @param darr 目标「动态数组」的指针。
+ *
+ * @return 全局状态码。
  */
-void darr_reverse(
+int darr_reverse(
 	darr_adt *darr
 ) ATTRS_NONNULL(1);
 
