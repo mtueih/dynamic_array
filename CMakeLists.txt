@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(dynamic_array VERSION 0.1.0 LANGUAGES C)
+project(dynamic_array VERSION 1.0.0 LANGUAGES C)
 
 # 引入标准 CMake 模块用于安装和包配置。
 include(GNUInstallDirs)
