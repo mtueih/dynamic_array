@@ -501,7 +501,7 @@ bool darr_find_binary(
  * @param ctx 比较函数的上下文参数。
  * @param desc 是否进行逆序排序。
  */
-void darr_sort(
+int darr_sort(
 	darr_adt *darr,
 	int (*cmp)(const void *, const void *, void *),
 	void *ctx,

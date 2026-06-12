@@ -1003,114 +1003,31 @@ finded:
 
 /* 排序、反转。 */
 
-void darr_sort(
+int darr_sort(
 	darr_adt *const darr,
 	int (*const cmp)(const void *, const void *, void *),
 	void *const ctx,
 	const bool desc
 ) {
-	char *temp;        // 临时分配内存
-	size_t width;      // 归并排序中，子数组宽度
-	char *j, *k, *l;   // 用于在循环中迭代
-	size_t i;          // 用于在循环中迭代
-	char *mid, *right; // 归并排序中，子数组的 3 个位置
-	bool src_is_data;  // 归并排序中，用于乒乓策略
-	char *src, *dst;   // 归并排序中，用于乒乓策略
-	bool hasFreeCap;
-
-
 	/* 开发阶段参数检查。 */
 	assert(darr != DARR_NULLPTR);
 	assert(cmp != DARR_NULLPTR);
 
 	/* 参数检查 */
 	/* 如果数组元素不足 2 个，那么就无需进行排序。 */
-	if (darr->len < 2) return;
+	if (darr->len < 2) {
+		return DARR_SUCCESS;
+	}
 
 	/* 当数组元素个数大于「排序算法阈值」时，使用「归并排序」，否则使用「插入排序」。 */
-	if (darr->len > DARR_SORT_THRESHOLD
-	    && (temp = malloc(darr->len * darr->em_sz)) != DARR_NULLPTR
-	) {
-		src_is_data = true;
-		/* 从长度为1的子数组开始，逐步倍增。 */
-		for (width = 1; width < darr->len; width <<= 1) {
-			src = src_is_data ? (char *) darr->data : temp;
-			dst = src_is_data ? temp : (char *) darr->data;
-			/* 归并相邻的两个有序子数组. */
-			for (i = 0; i < darr->len; i += (width << 1)) {
-				mid = src + DARR_MIN(i + width, darr->len) * darr->em_sz;
-				right = src + DARR_MIN(i + 2 * width, darr->len) * darr->em_sz;
-
-				j = src + i * darr->em_sz;
-				k = mid;
-				l = dst + i * darr->em_sz;
-				/* 归并 arr[left:mid] 和 arr[mid:right] 到 temp。 */
-				while (j < mid && k < right) {
-					if (desc ? cmp(j, k, ctx) > 0 : cmp(j, k, ctx) < 0) {
-						memcpy(l, j, darr->em_sz);
-						j += darr->em_sz;
-					} else {
-						memcpy(l, k, darr->em_sz);
-						k += darr->em_sz;
-					}
-					l += darr->em_sz;
-				}
-				while (j < mid) {
-					memcpy(l, j, darr->em_sz);
-					j += darr->em_sz;
-					l += darr->em_sz;
-				}
-				while (k < right) {
-					memcpy(l, k, darr->em_sz);
-					k += darr->em_sz;
-					l += darr->em_sz;
-				}
-			}
-			src_is_data = !src_is_data;
-		}
-		if (!src_is_data) {
-			/* 将临时数组内容复制回原数组。 */
-			memcpy(darr->data, temp, darr->len * darr->em_sz);
-		}
-		free(temp);
-	} else {
-		/* 如果当前数组的容量大于长度，那么直接使用空闲容量来存储临时数据。 */
-		hasFreeCap = darr->cap > darr->len;
-		if (hasFreeCap) {
-			temp = (char *) darr->data + (darr->len - 1) * darr->em_sz;
-		} else {
-			temp = malloc(darr->em_sz);
-
-			if (temp == DARR_NULLPTR) return;
-		}
-
-		/* 插入排序算法 */
-		for (j = (char *) darr->data + darr->em_sz;
-		     j < (char *) darr->data + darr->len * darr->em_sz;
-		     j += darr->em_sz
-		) {
-			/* 将当前元素复制到临时变量 */
-			memcpy(temp, j, darr->em_sz);
-
-			/* 在已排序部分找到插入位置 */
-			k = j - darr->em_sz;
-			while (k >= (char *) darr->data &&
-			       (desc ? cmp(k, temp, ctx) < 0 : cmp(k, temp, ctx) > 0)) {
-				/* 将元素向后移动 */
-				memcpy(k + darr->em_sz, k, darr->em_sz);
-				k -= darr->em_sz;
-			}
-
-			/* 插入到正确位置 */
-			if (k != j - darr->em_sz) {
-				memcpy(k + darr->em_sz, temp, darr->em_sz);
-			}
-		}
-		/* 释放临时分配的内存。 */
-		if (!hasFreeCap) {
-			free(temp);
+	if (darr->len > DARR_SORT_THRESHOLD) {
+		if (merge_sort(darr, cmp, ctx, desc) == DARR_SUCCESS) {
+			return DARR_SUCCESS;
 		}
 	}
+
+	/* 否则。或者「归并排序」失败，回退到「插入排序」。 */
+	return insertion_sort(darr, cmp, ctx, desc);
 }
 
 int darr_reverse(
@@ -1403,5 +1320,176 @@ static int merge_sort(
 	void *const ctx,
 	const bool desc
 ) {
+	char *tmp;         /* 指向临时内存的指针。 */
+	bool has_free_cap; /* 源数组是否有足够空闲容量。 */
+
+	size_t darr_len, darr_cap, darr_em_sz; /* 用于缓存成员变量。 */
+	size_t darr_size;                      /* 缓存 darr_len * darr_em_sz。 */
+	char *darr_data;                       /* 用于缓存成员变量。 */
+
+	/**
+	 * 用于「乒乓策略」，当用于存放归并结果的缓冲区被写满一次（执行完一轮归并后）后，
+	 * 此时，「归并结果缓冲区」是可以完整拷贝写入一次「数组缓冲区」之后再进行下一轮归并的。
+	 * 但是这样存在性能浪费。「乒乓策略」则是每进行一轮归并后，交替两缓冲区的身份，
+	 * 即，将「归并结果缓冲区」视为「数组缓冲区」，将「数组缓冲区」视为「归并结果缓冲区」。
+	 * 最后，如果缓冲区身份是错位的，那就进行一次拷贝即可。
+	 * 这样可以大幅减少大数据快的拷贝次数。
+	 */
+	bool src_is_data; /* 指向数组缓冲区的指针是 src 还是 dst。 */
+	char *src, *dst;  /* 归并排序「乒乓策略」中，指向「数组缓冲区」的指针，和指向用于存放归并结果的缓冲区的指针。 */
+
+	size_t width; /* 归并排序中，「子数组」的宽度。用于迭代。 */
+	size_t i;     /* 归并排序中，相邻两「子数组」对的起始下标。用于迭代。 */
+	/**
+	 * 归并排序中，用于标识相邻两「子数组」对中，
+	 * 第 1 个「子数组」的结束位置（同时也是第 2 个「子数组」的起始位置），
+	 * 和第 2 个「子数组」的结束位置的指针。
+	 * 用于迭代过程中的边界指针。
+	 */
+	char *mid, *right;
+	/**
+	 * 归并排序中，j、k 分别指向两「子数组」中下一个待比较元素。
+	 * l 指向「归并结果缓冲区」中下一个可写入位置。
+	 */
+	char *j, *k, *l;
+
+	int cmp_ret; /* 存储元素比较函数的返回值。 */
+
+	/**
+	 * 分配临时内存用于归并。
+	 * 如果目前数组空闲容量大于等于数组长度的两倍，那么直接使用数组空闲容量作为临时内存。
+	 * 即，数组长度小于等于容量的一半。
+	 */
+	darr_len = darr->len;
+	darr_cap = darr->cap;
+	darr_em_sz = darr->em_sz;
+	darr_size = darr_len * darr_em_sz;
+
+	has_free_cap = (darr_len <= (darr_cap >> 1));
+
+	if (has_free_cap) {
+		tmp = DARR_EM_AT(darr, darr_cap - darr_len);
+	} else {
+		tmp = malloc(darr_size);
+
+		if (tmp == DARR_NULLPTR) {
+			return DARR_MEMORY_ALLOC_FAILED;
+		}
+	}
+
+	/* 最开始，数组数据确实位于「数组缓冲区」中。 */
+	src_is_data = true;
+	darr_data = darr->data;
+
+	/**
+	 * 从宽度为 1 的「子数组」开始，每一轮都处理当前宽度下，每两个相邻「子数组」的归并。
+	 * 每一轮归并后，意味着每个宽度为 width * 2 的「子数组」都已经是有序的，
+	 * 下一轮则是归并每两个相邻的，宽度为 width * 2 的「子数组」。
+	 * 因此每一轮结束后，width 都 * 2。
+	 * 一个数组最多能分成两个「子数组」，因此，循环的最后一轮，width 应该是数组长度 / 2。
+	 * 之后循环就应该停止。最后一轮之后，width * 2 后，必然 >= 数组长度。
+	 * 因此将 width < darr_len 作为循环条件。
+	 */
+	for (width = 1; width < darr_len; width <<= 1) {
+		/**
+		 * 「乒乓策略」，每轮结束后，交替两缓冲区的身份。
+		 * src：指向「数组缓冲区」，即归并所处理的数据所在的缓冲区。
+		 * dst：指向「归并结果缓冲区」，即存放归并结果所使用的缓冲区。
+		 */
+		src = src_is_data ? darr_data : tmp;
+		dst = src_is_data ? tmp : darr_data;
+
+		/**
+		 * 归并当前一轮的「子数组」宽度下，每两个相邻的「子数组」，结果写入「归并结果缓冲区」。
+		 * 每次迭代处理两个「子数组」，当然也有一个「子数组」的情况，当「子数组」的个数是奇数时。
+		 * 那么迭代可以通过一个指向缓冲区某位置的指针来进行，每轮迭代后，指针都要跨越两个「子数组」，
+		 * 最开始，指向整个「数组缓冲区」的第一个「子数组」。
+		 * 当指针指向「数组缓冲区」之外时，停止循环。
+		 */
+
+		for (i = 0; i < darr_len; i += (width << 1)) {
+			/**
+			 * 每轮当前迭代中，我们要归并 p 指向位置向后的两个相邻「子数组」。
+			 * 为此，我们需要分别知道两个「子数组」的起始位置和结束位置（使用前闭后开区间）。
+			 * 第一个「子数组」的起始位置是 p，毫无疑问。
+			 * 第二个「子数组」的起始位置，同时也是第一个「子数组」的结束位置，【我们用一个 mid 指针表示。】
+			 * 应该是 p 向后移动 1 个「子数组」的宽度，即 p + width * darr_em_sz。
+			 * 而第二个「子数组」的结束位置，【我们用一个 right 指针表示。】
+			 * 应该是 p 向后移动 2 个「子数组」的宽度，即 mid + width * darr_em_sz。
+			 *
+			 * 但情况并不总是这样，当总「子数组」个数为奇数时，最后一轮拿到的，只有一个「子数组」，
+			 * 即 p 后面只有一个「子数组」，如何处理第二个「子数组」不存在的情况？
+			 * 我们在处理第二个「子数组」的起始位置和结束位置的时候，
+			 * 第二个「子数组」的起始位置正常为 p 向后移动 1 个「子数组」的宽度即可。
+			 * 而第二个「子数组」的结束位置，应该与其起始位置是重叠的。
+			 * 如何做到这一点？我们只需要确保第二个「子数组」的结束位置的指针不超过数组缓冲区的结束位置即可。
+			 */
+			mid = src + DARR_MIN(i + width, darr_len) * darr_em_sz;
+			right = src + DARR_MIN(i + (width << 1), darr_len) * darr_em_sz;
+
+			/**
+			 * 归并过程中，需要 3 个指针变量。
+			 * j、k 分别指向两个「子数组」中需要比较的元素；
+			 * l 指向「归并结果缓冲区」中下一个可写入位置。
+			 */
+			j = src + i * darr_em_sz;
+			k = mid;
+
+			l = dst + i * darr_em_sz;
+
+			/**
+			 * 同时依次遍历两个「子数组」。每两个元素一对相比较，符合目标顺序大小的，先放入「归并结果缓冲区」。
+			 * 如果其中一个「子数组」已经遍历完，那么下面这个循环就不会再执行。
+			 * 这也兼顾了只有一个「子数组」的情况，此时此循环压根不会执行。
+			 * 后续直接将没遍历完的那个「子数组」的剩余元素原封不动写入「归并结果缓冲区」。
+			 */
+			while (j < mid && k < right) {
+				cmp_ret = cmp(j, k, ctx);
+
+				/**
+				 * 在顺序排序的情况下，如果 j <= k（ret <= 0），则优先写入 j，否则写入 k；
+				 * 在逆序排序的情况下，如果 j >= k（ret >= 0），则优先写入 j，否则写入 k。
+				 */
+				if ((!desc && cmp_ret <= 0) ||
+				    (desc && cmp_ret >= 0)
+				) {
+					/* 写入 j 后，j 指向其「子数组」中的下一个元素。 */
+					memcpy(l, j, darr_em_sz);
+					j += darr_em_sz;
+				} else {
+					/* 写入 k 后，k 指向其「子数组」中的下一个元素。 */
+					memcpy(l, k, darr_em_sz);
+					k += darr_em_sz;
+				}
+
+				/* l 被写入后，指向「归并结果缓冲区」的下一个位置。 */
+				l += darr_em_sz;
+			}
+
+			/* 没遍历完的「子数组」剩余元素原封不动写入「归并结果缓冲区」。 */
+			/* 如果是第 1 个「子数组」没遍历完。 */
+			if (j < mid) {
+				memcpy(l, j, mid - j);
+			}
+			/* 如果是第 2 个「子数组」没遍历完。 */
+			else if (k < mid) {
+				memcpy(l, k, right - k);
+			}
+		}
+
+		/* 「乒乓策略」：交替两缓冲区的身份。 */
+		src_is_data = !src_is_data;
+	}
+
+	/* 「乒乓策略」：如果两缓冲区身份错位，则将数据写回「数组缓冲区」。 */
+	if (!src_is_data) {
+		memcpy(darr_data, tmp, darr_size);
+	}
+
+	/* 释放临时分配的内存。 */
+	if (!has_free_cap) {
+		free(tmp);
+	}
+
 	return DARR_SUCCESS;
 }
