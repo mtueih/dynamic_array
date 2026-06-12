@@ -12,8 +12,8 @@
 #  define DARR_NULLPTR NULL
 #endif
 
-/* 递归截止点。当数组元素大于此值时使用归并排序算法，否则使用快速排序。 */
-#define DARR_RECURSION_CUTOFF_POINT 16
+/* 排序算法阈值。当数组元素大于此值时使用适用于较大数据量的「归并排序」算法，否则使用适用于较小数据量的「插入排序」算法。 */
+#define DARR_SORT_THRESHOLD 16
 
 #define DARR_MAX(a, b) ((a) > (b) ? (a) : (b))
 #define DARR_MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -57,7 +57,7 @@ struct dynamic_array {
 static bool capacity_resize(
 	darr_adt *darr,
 	size_t new_len
-);
+) ATTRS_NONNULL(1);
 
 /**
  * @brief 常规调整一个「动态数组」的容量。
@@ -72,7 +72,7 @@ static bool capacity_resize(
 static bool capacity_resize_regular(
 	darr_adt *darr,
 	size_t new_len
-);
+) ATTRS_NONNULL(1);
 
 /**
  * @brief 动态调整一个「动态数组」的容量。
@@ -87,7 +87,7 @@ static bool capacity_resize_regular(
 static bool capacity_resize_dynamic(
 	darr_adt *darr,
 	size_t new_len
-);
+) ATTRS_NONNULL(1);
 
 /* 元素操作。 */
 
@@ -108,7 +108,7 @@ static int elements_insert(
 	size_t index,
 	const void *elements,
 	size_t count
-);
+) ATTRS_NONNULL(1, 3);
 
 /**
  * @brief 删除一个「动态数组」中的若干元素。
@@ -121,7 +121,45 @@ static void elements_remove(
 	darr_adt *darr,
 	size_t index,
 	size_t count
-);
+) ATTRS_NONNULL(1);
+
+/* 排序算法实现。 */
+
+/**
+ * @brief 对一个「动态数组」进行插入排序。
+ *
+ * @param darr 目标「动态数组」的指针。
+ * @param cmp 元素比较函数指针，其返回值因遵循 C 标准函数惯例
+ * （两者相等返回 0，前者大于后者返回正值，前者小于后者返回负值）。
+ * @param ctx 比较函数的上下文参数。
+ * @param desc 是否进行逆序排序。
+ *
+ * @return 全局状态码。
+ */
+static int insertion_sort(
+	darr_adt *darr,
+	int (*cmp)(const void *, const void *, void *),
+	void *ctx,
+	bool desc
+) ATTRS_NONNULL(1, 2);
+
+/**
+ * @brief 对一个「动态数组」进行归并排序。
+ *
+ * @param darr 目标「动态数组」的指针。
+ * @param cmp 元素比较函数指针，其返回值因遵循 C 标准函数惯例
+ * （两者相等返回 0，前者大于后者返回正值，前者小于后者返回负值）。
+ * @param ctx 比较函数的上下文参数。
+ * @param desc 是否进行逆序排序。
+ *
+ * @return 全局状态码。
+ */
+static int merge_sort(
+	darr_adt *darr,
+	int (*cmp)(const void *, const void *, void *),
+	void *ctx,
+	bool desc
+) ATTRS_NONNULL(1, 2);
 
 
 /***************************************************************
@@ -137,11 +175,15 @@ darr_adt *darr_create(
 	darr_adt *new_darr;
 
 	/* 元素大小为 0，视为创建失败，或者创建空气。 */
-	if (element_size == 0) return DARR_NULLPTR;
+	if (element_size == 0) {
+		return DARR_NULLPTR;
+	}
 
 	/* 为「动态数组」容器分配内存。 */
 	new_darr = malloc(sizeof(darr_adt));
-	if (new_darr == DARR_NULLPTR) return DARR_NULLPTR;
+	if (new_darr == DARR_NULLPTR) {
+		return DARR_NULLPTR;
+	}
 
 	/* 初始化「动态数组」。 */
 	new_darr->em_sz = element_size;
@@ -183,7 +225,9 @@ void darr_destroy(
 	assert(darr != DARR_NULLPTR);
 
 	/* 如果「darr->data」不为空指针，则释放。 */
-	if (darr->data != DARR_NULLPTR) free(darr->data);
+	if (darr->data != DARR_NULLPTR) {
+		free(darr->data);
+	}
 
 	/* 释放「动态数组」容器内存。 */
 	free(darr);
@@ -230,7 +274,9 @@ void *darr_at(
 	assert(darr != DARR_NULLPTR);
 
 	/* 检查索引是否越界。 */
-	if (index >= darr->len) return DARR_NULLPTR;
+	if (index >= darr->len) {
+		return DARR_NULLPTR;
+	}
 
 	return DARR_EM_AT(darr, index);
 }
@@ -243,7 +289,9 @@ const void *darr_at_const(
 	assert(darr != DARR_NULLPTR);
 
 	/* 检查索引是否越界。 */
-	if (index >= darr->len) return DARR_NULLPTR;
+	if (index >= darr->len) {
+		return DARR_NULLPTR;
+	}
 
 	return DARR_EM_AT(darr, index);
 }
@@ -292,7 +340,9 @@ int darr_set_capacity(
 	assert(darr != DARR_NULLPTR);
 
 	/* 如果 new_capacity 等于当前容量的话，什么也不用做，直接返回成功。 */
-	if (new_capacity == darr->cap) return DARR_SUCCESS;
+	if (new_capacity == darr->cap) {
+		return DARR_SUCCESS;
+	}
 
 	/**
 	 * 调用 capacity_resize_regular 函数，执行容量调整操作。
@@ -329,11 +379,15 @@ int darr_reserve(
 	assert(darr != DARR_NULLPTR);
 
 	/* 如果 new_capacity 等于当前容量的话，什么也不用做，直接返回成功。 */
-	if (new_capacity == darr->cap) return DARR_SUCCESS;
+	if (new_capacity == darr->cap) {
+		return DARR_SUCCESS;
+	}
 
 	/* 如果 new_capacity 小于当前数组长度的话，那么视为无效参数，因为此函数不能截断现有内容。 */
 	/* 实际上，如果 new_capacity 小于当前数组长度，应当返回成功，因为此函数并没有约束参数，只是从行为上确保不截断现有内容。 */
-	if (new_capacity < darr->len) return DARR_SUCCESS;
+	if (new_capacity < darr->len) {
+		return DARR_SUCCESS;
+	}
 
 	/**
 	 * 此函数与「darr_set_capacity」不同之处在于，此函数不会截断当前内容。
@@ -361,10 +415,14 @@ void darr_shrink_to_fit(
 	 * 执行此函数，无论实际调整成功与否，都将「min_cap」的值置为 0。
 	 * 因为调用此函数的行为，视为放弃保底预期。
 	 */
-	if (darr->min_cap != 0) darr->min_cap = 0;
+	if (darr->min_cap != 0) {
+		darr->min_cap = 0;
+	}
 
 	/* 如果当前容量已经等于数组长度了，那就直接返回。 */
-	if (darr->cap == darr->len) return;
+	if (darr->cap == darr->len) {
+		return;
+	}
 
 	/**
 	 * 执行 capacity_resize_regular
@@ -402,7 +460,9 @@ int darr_append_n(
 
 	/* 参数检查。 */
 	/* 检查 count 是否为 0，如果为 0，视为什么都不追加，那么操作是一定成功的。 */
-	if (count == 0) return DARR_SUCCESS;
+	if (count == 0) {
+		return DARR_SUCCESS;
+	}
 
 	/* 在数组末尾追加多个元素，等价于在末尾（下标为「darr->len」的位置）插入多个元素。 */
 	return elements_insert(darr, darr->len, elements, count);
@@ -431,7 +491,9 @@ int darr_prepend_n(
 
 	/* 参数检查。 */
 	/* 检查 count 是否为 0，如果为 0，视为什么都不追加，那么操作是一定成功的。 */
-	if (count == 0) return DARR_SUCCESS;
+	if (count == 0) {
+		return DARR_SUCCESS;
+	}
 
 	/* 在数组开头追加多个元素，等价于在开头（下标为「0」的位置）插入多个元素。 */
 	return elements_insert(darr, 0, elements, count);
@@ -448,7 +510,9 @@ int darr_insert(
 
 	/* 参数检查。 */
 	/* 检查下标是否越界。（对于插入操作，索引等于「darr->len」是可以的，相当于尾部追加。） */
-	if (index > darr->len) return DARR_INVALID_PARAM;
+	if (index > darr->len) {
+		return DARR_INVALID_PARAM;
+	}
 
 	/* 插入一个元素。 */
 	return elements_insert(darr, index, element, 1);
@@ -466,9 +530,13 @@ int darr_insert_n(
 
 	/* 参数检查。 */
 	/* 检查下标是否越界。（对于插入操作，索引等于「darr->len」是可以的，相当于尾部追加。） */
-	if (index > darr->len) return DARR_INVALID_PARAM;
+	if (index > darr->len) {
+		return DARR_INVALID_PARAM;
+	}
 	/* 检查 count 是否为 0，如果为 0，视为什么都不插入，那么操作是一定成功的。 */
-	if (count == 0) return DARR_SUCCESS;
+	if (count == 0) {
+		return DARR_SUCCESS;
+	}
 
 	/* 插入多个元素。 */
 	return elements_insert(darr, index, elements, count);
@@ -483,7 +551,9 @@ int darr_remove(
 
 	/* 参数检查。 */
 	/* 检查下标是否越界。 */
-	if (index >= darr->len) return DARR_INVALID_PARAM;
+	if (index >= darr->len) {
+		return DARR_INVALID_PARAM;
+	}
 
 	elements_remove(darr, index, 1);
 
@@ -500,9 +570,13 @@ int darr_remove_n(
 
 	/* 参数检查。 */
 	/* 检查下标是否越界。 */
-	if (index >= darr->len) return DARR_INVALID_PARAM;
+	if (index >= darr->len) {
+		return DARR_INVALID_PARAM;
+	}
 	/* 检查 index + count 是否超过数组末尾。 */
-	if (!safe_size_add_test(index, count) || index + count > darr->len) return DARR_INVALID_PARAM;
+	if (!safe_size_add_test(index, count) || index + count > darr->len) {
+		return DARR_INVALID_PARAM;
+	}
 
 	elements_remove(darr, index, count);
 
@@ -526,7 +600,9 @@ int darr_swap(
 	/* 参数检查。 */
 	/* 检查下标是否越界。 */
 	/* 如果两下标相等，也直接返回。 */
-	if (index_1 == index_2 || index_1 >= darr->len || index_2 >= darr->len) return DARR_INVALID_PARAM;
+	if (index_1 == index_2 || index_1 >= darr->len || index_2 >= darr->len) {
+		return DARR_INVALID_PARAM;
+	}
 
 	/* 如果当前数组的容量大于长度，那么直接使用空闲容量来存储临时数据。 */
 	hasFreeCap = darr->cap > darr->len;
@@ -536,7 +612,9 @@ int darr_swap(
 		temp = malloc(darr->em_sz);
 
 		/* 如果分配失败，直接返回。 */
-		if (temp == DARR_NULLPTR) return DARR_MEMORY_ALLOC_FAILED;
+		if (temp == DARR_NULLPTR) {
+			return DARR_MEMORY_ALLOC_FAILED;
+		}
 	}
 
 	elem_1 = DARR_EM_AT(darr, index_1);
@@ -608,10 +686,12 @@ darr_adt *darr_clone(
 void darr_foreach(
 	darr_adt *const darr,
 	void (*const func)(void *, void *),
-	void *const ctx
+	void *const ctx,
+	const bool backward
 ) {
 	char *p;
-	const char *end;
+	char *end, *start;
+	size_t darr_em_sz;
 
 	/* 开发阶段参数检查。 */
 	assert(darr != DARR_NULLPTR);
@@ -621,20 +701,32 @@ void darr_foreach(
 	/* 如果数组为空，则直接返回。 */
 	if (darr->len == 0) return;
 
+	start = DARR_EM_AT(darr, 0);
 	end = DARR_EM_AT(darr, darr->len);
+	darr_em_sz = darr->em_sz;
 
-	for (p = DARR_EM_AT(darr, 0); p < end; p += darr->em_sz) {
-		func(p, ctx);
+	if (backward) {
+		for (p = end; p > start;) {
+			p -= darr_em_sz;
+
+			func(p, ctx);
+		}
+	} else {
+		for (p = start; p < end; p += darr_em_sz) {
+			func(p, ctx);
+		}
 	}
 }
 
 void darr_foreach_const(
 	const darr_adt *const darr,
 	void (*const func)(const void *, void *),
-	void *const ctx
+	void *const ctx,
+	const bool backward
 ) {
 	const char *p;
-	const char *end;
+	const char *end, *start;
+	size_t darr_em_sz;
 
 	/* 开发阶段参数检查。 */
 	assert(darr != DARR_NULLPTR);
@@ -644,10 +736,20 @@ void darr_foreach_const(
 	/* 如果数组为空，则直接返回。 */
 	if (darr->len == 0) return;
 
+	start = DARR_EM_AT(darr, 0);
 	end = DARR_EM_AT(darr, darr->len);
+	darr_em_sz = darr->em_sz;
 
-	for (p = DARR_EM_AT(darr, 0); p < end; p += darr->em_sz) {
-		func(p, ctx);
+	if (backward) {
+		for (p = end; p > start;) {
+			p -= darr_em_sz;
+
+			func(p, ctx);
+		}
+	} else {
+		for (p = start; p < end; p += darr_em_sz) {
+			func(p, ctx);
+		}
 	}
 }
 
@@ -660,7 +762,8 @@ bool darr_contains(
 	const bool backward
 ) {
 	const char *p;
-	const char *end;
+	const char *end, *start;
+	size_t darr_em_sz;
 
 	/* 开发阶段参数检查。 */
 	assert(darr != DARR_NULLPTR);
@@ -670,15 +773,20 @@ bool darr_contains(
 	/* 如果数组为空，则一定不包含。 */
 	if (darr->len == 0) return false;
 
+	start = DARR_EM_AT(darr, 0);
 	end = DARR_EM_AT(darr, darr->len);
+	darr_em_sz = darr->em_sz;
+
 	if (backward) {
-		for (p = end - darr->em_sz; p >= DARR_EM_AT(darr, 0); p -= darr->em_sz) {
+		for (p = end; p > start;) {
+			p -= darr_em_sz;
+
 			if (predicate(p, ctx)) {
 				return true;
 			}
 		}
 	} else {
-		for (p = (char *) darr->data; p < end; p += darr->em_sz) {
+		for (p = start; p < end; p += darr_em_sz) {
 			if (predicate(p, ctx)) {
 				return true;
 			}
@@ -696,7 +804,8 @@ bool darr_find(
 	const bool backward
 ) {
 	const char *p;
-	const char *end;
+	const char *end, *start;
+	size_t darr_em_sz;
 
 	/* 开发阶段参数检查。 */
 	assert(darr != DARR_NULLPTR);
@@ -706,15 +815,20 @@ bool darr_find(
 	/* 如果数组为空，则一定不包含。 */
 	if (darr->len == 0) return false;
 
+	start = DARR_EM_AT(darr, 0);
 	end = DARR_EM_AT(darr, darr->len);
+	darr_em_sz = darr->em_sz;
+
 	if (backward) {
-		for (p = end - darr->em_sz; p >= DARR_EM_AT(darr, 0); p -= darr->em_sz) {
+		for (p = end; p > start;) {
+			p -= darr_em_sz;
+
 			if (predicate(p, ctx)) {
 				goto finded;
 			}
 		}
 	} else {
-		for (p = (char *) darr->data; p < end; p += darr->em_sz) {
+		for (p = start; p < end; p += darr_em_sz) {
 			if (predicate(p, ctx)) {
 				goto finded;
 			}
@@ -724,7 +838,10 @@ bool darr_find(
 	return false;
 
 finded:
-	if (out_index != DARR_NULLPTR) *out_index = (p - (char *) darr->data) / darr->em_sz;
+	if (out_index != DARR_NULLPTR) {
+		*out_index = (p - start) / darr_em_sz;
+	}
+
 	return true;
 }
 
@@ -737,8 +854,9 @@ bool darr_find_n(
 	const bool backward
 ) {
 	const char *p;
-	const char *end;
+	const char *end, *start;
 	size_t find_count;
+	size_t darr_em_sz;
 
 	/* 开发阶段参数检查。 */
 	assert(darr != DARR_NULLPTR);
@@ -749,19 +867,24 @@ bool darr_find_n(
 	if (darr->len == 0) return false;
 
 	find_count = 0;
+	start = DARR_EM_AT(darr, 0);
 	end = DARR_EM_AT(darr, darr->len);
+	darr_em_sz = darr->em_sz;
 
 	if (backward) {
-		for (p = end - darr->em_sz; p >= DARR_EM_AT(darr, 0); p -= darr->em_sz) {
+		for (p = end; p > start;) {
+			p -= darr_em_sz;
+
 			if (predicate(p, ctx)) {
 				++find_count;
+
 				if (find_count == n) {
 					goto finded;
 				}
 			}
 		}
 	} else {
-		for (p = (char *) darr->data; p < end; p += darr->em_sz) {
+		for (p = start; p < end; p += darr_em_sz) {
 			if (predicate(p, ctx)) {
 				++find_count;
 
@@ -780,7 +903,10 @@ bool darr_find_n(
 	return false;
 
 finded:
-	if (out_index != DARR_NULLPTR) *out_index = (p - (char *) darr->data) / darr->em_sz;
+	if (out_index != DARR_NULLPTR) {
+		*out_index = (p - start) / darr_em_sz;
+	}
+
 	return true;
 }
 
@@ -790,8 +916,9 @@ size_t darr_count(
 	void *const ctx
 ) {
 	const char *p;
-	const char *end;
+	const char *end, *start;
 	size_t count;
+	size_t darr_em_sz;
 
 	/* 开发阶段参数检查。 */
 	assert(darr != DARR_NULLPTR);
@@ -799,12 +926,16 @@ size_t darr_count(
 
 	/* 参数检查。 */
 	/* 如果数组为空，则一定不包含。 */
-	if (darr->len == 0) return 0;
+	if (darr->len == 0) {
+		return 0;
+	}
 
 	count = 0;
+	start = DARR_EM_AT(darr, 0);
 	end = DARR_EM_AT(darr, darr->len);
+	darr_em_sz = darr->em_sz;
 
-	for (p = (char *) darr->data; p < end; p += darr->em_sz) {
+	for (p = start; p < end; p += darr_em_sz) {
 		if (predicate(p, ctx)) {
 			++count;
 		}
@@ -831,30 +962,43 @@ bool darr_find_binary(
 
 	/* 参数检查。 */
 	/* 如果数组为空，则一定不包含。 */
-	if (darr->len == 0) return false;
+	if (darr->len == 0) {
+		return false;
+	}
 
 	left = 0;
-	right = darr->len - 1;
+	right = darr->len;
 
-	while (left <= right) {
+	while (left < right) {
 		/* 防止 (left + right) 导致溢出。 */
-		mid = (left + (right - left)) >> 1;
+		mid = (left & right) + ((left ^ right) >> 1);
 
-		ret = cmp(DARR_EM_AT(darr, mid), element, ctx);
+		/* 处理逆序排序的情况。 */
 		if (desc) {
-			ret = -ret;
+			ret = cmp(element, DARR_EM_AT(darr, mid), ctx);
+		} else {
+			ret = cmp(DARR_EM_AT(darr, mid), element, ctx);
 		}
+
 		if (ret == 0) {
-			if (out_index != DARR_NULLPTR) *out_index = mid;
-			return true;
-		} else if (ret > 0) {
-			right = mid - 1;
+			goto finded;
+		}
+
+		if (ret > 0) {
+			right = mid;
 		} else {
 			left = mid + 1;
 		}
 	}
 
 	return false;
+
+finded:
+	if (out_index != DARR_NULLPTR) {
+		*out_index = mid;
+	}
+
+	return true;
 }
 
 /* 排序、反转。 */
@@ -883,8 +1027,8 @@ void darr_sort(
 	/* 如果数组元素不足 2 个，那么就无需进行排序。 */
 	if (darr->len < 2) return;
 
-	/* 当数组元素个数大于「递归截止点」时，使用「归并排序」，否则使用「插入排序」。 */
-	if (darr->len > DARR_RECURSION_CUTOFF_POINT
+	/* 当数组元素个数大于「排序算法阈值」时，使用「归并排序」，否则使用「插入排序」。 */
+	if (darr->len > DARR_SORT_THRESHOLD
 	    && (temp = malloc(darr->len * darr->em_sz)) != DARR_NULLPTR
 	) {
 		src_is_data = true;
@@ -973,7 +1117,7 @@ int darr_reverse(
 	darr_adt *const darr
 ) {
 	char *p, *q;
-	char *temp;
+	char *tmp;
 	bool has_free_cap;
 
 	/* 开发阶段参数检查。 */
@@ -981,17 +1125,21 @@ int darr_reverse(
 
 	/* 参数检查。 */
 	/* 如果「动态数组」元素个数小于 2，那么无需反转，直接返回。 */
-	if (darr->len < 2) return DARR_SUCCESS;
+	if (darr->len < 2) {
+		return DARR_SUCCESS;
+	}
 
 	/* 如果「动态数组」容量大于长度，则直接使用空闲容量来存储临时数据。 */
 	has_free_cap = (darr->cap > darr->len);
 	if (has_free_cap) {
-		temp = DARR_EM_AT(darr, darr->cap - 1);
+		tmp = DARR_EM_AT(darr, darr->cap - 1);
 	} else {
 		/* 否则分配内存来存储。 */
-		temp = malloc(darr->em_sz);
+		tmp = malloc(darr->em_sz);
 		/* 如果分配失败则直接返回。 */
-		if (temp == DARR_NULLPTR) return DARR_MEMORY_ALLOC_FAILED;
+		if (tmp == DARR_NULLPTR) {
+			return DARR_MEMORY_ALLOC_FAILED;
+		}
 	}
 
 	/* 初始化迭代变量。 */
@@ -1000,9 +1148,9 @@ int darr_reverse(
 
 	while (p < q) {
 		/* 交换两元素。 */
-		memcpy(temp, p, darr->em_sz);
+		memcpy(tmp, p, darr->em_sz);
 		memcpy(p, q, darr->em_sz);
-		memcpy(q, temp, darr->em_sz);
+		memcpy(q, tmp, darr->em_sz);
 
 		/* 迭代。 */
 		p += darr->em_sz;
@@ -1011,7 +1159,7 @@ int darr_reverse(
 
 	/* 释放临时分配的内存。 */
 	if (!has_free_cap) {
-		free(temp);
+		free(tmp);
 	}
 
 	return DARR_SUCCESS;
@@ -1191,4 +1339,69 @@ static void elements_remove(
 
 	/* 动态减容。 */
 	capacity_resize_dynamic(darr, darr->len);
+}
+
+/* 排序算法实现。 */
+
+static int insertion_sort(
+	darr_adt *const darr,
+	int (*const cmp)(const void *, const void *, void *),
+	void *const ctx,
+	const bool desc
+) {
+	size_t i, j;
+	int cmp_ret;
+	char *tmp;
+	bool has_free_cap;
+
+	/* 如果当前数组有空闲容量，则使用它来存储临时数据，否则就新分配内存。 */
+	has_free_cap = (darr->cap > darr->len);
+	if (has_free_cap) {
+		tmp = DARR_EM_AT(darr, darr->cap - 1);
+	} else {
+		tmp = malloc(darr->em_sz);
+
+		if (tmp == DARR_NULLPTR) {
+			return DARR_MEMORY_ALLOC_FAILED;
+		}
+	}
+
+	/* 遍历每个「未排序元素」。 */
+	for (i = 1; i < darr->len; ++i) {
+		char *key = DARR_EM_AT(darr, i);
+
+		/* 在「已排序区域」中寻找正确位置。 */
+		for (j = i; j > 0; --j) {
+			cmp_ret = cmp(key, DARR_EM_AT(darr, j - 1), ctx);
+			if ((!desc && cmp_ret >= 0) ||
+			    (desc && cmp_ret <= 0)
+			) {
+				break;
+			}
+		}
+		/* 插入到正确位置（如果需要）。 */
+		if (j < i) {
+			/* 先拷贝待插入元素。 */
+			memcpy(tmp, key, darr->em_sz);
+
+			/* 向后移动「已排序区域」中，目标插入位置向后的元素。 */
+			memmove(DARR_EM_AT(darr, j + 1), DARR_EM_AT(darr, j), (i - j) * darr->em_sz);
+
+			/* 拷贝待插入元素到正确位置。 */
+			memcpy(DARR_EM_AT(darr, j), tmp, darr->em_sz);
+		}
+	}
+
+	if (!has_free_cap) free(tmp);
+
+	return DARR_SUCCESS;
+}
+
+static int merge_sort(
+	darr_adt *const darr,
+	int (*const cmp)(const void *, const void *, void *),
+	void *const ctx,
+	const bool desc
+) {
+	return DARR_SUCCESS;
 }
