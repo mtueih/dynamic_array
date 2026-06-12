@@ -301,8 +301,10 @@ int darr_insert_n(
  *
  * @param darr 目标「动态数组」的指针。
  * @param index 被删除元素的位置索引。
+ *
+ * @return 全局状态码。
  */
-void darr_remove(
+int darr_remove(
 	darr_adt *darr,
 	size_t index
 ) ATTRS_NONNULL(1);
@@ -313,8 +315,10 @@ void darr_remove(
  * @param darr 目标「动态数组」的指针。
  * @param index 被删除元素的起始位置索引。
  * @param count 删除元素个数，为 0 表示删除到末尾。
+ *
+ * @return 全局状态码。
  */
-void darr_remove_n(
+int darr_remove_n(
 	darr_adt *darr,
 	size_t index,
 	size_t count
@@ -328,8 +332,10 @@ void darr_remove_n(
  * @param darr 目标「动态数组」的指针。
  * @param index_1 第一个元素的位置索引。
  * @param index_2 第二个元素的位置索引。
+ *
+ * @return 全局状态码。
  */
-void darr_swap(
+int darr_swap(
 	darr_adt *darr,
 	size_t index_1,
 	size_t index_2
@@ -381,61 +387,35 @@ void darr_foreach_const(
 /* 查询、查找。 */
 
 /**
- * @brief 判断一个「动态数组」中，是否包含与某个元素“相等”的元素。
+ * @brief 判断一个「动态数组」中，是否包含符合某种条件的元素。
  *
  * @param darr 目标「动态数组」的指针。
- * @param element 被比较元素的指针。
- * @param cmp 元素比较函数指针，其返回值因遵循 C 标准函数惯例
- * （两者相等返回 0，前者大于后者返回正值，前者小于后者返回负值）。
- * @param ctx 比较函数的上下文参数。
+ * @param predicate 谓词函数，用于检查一个元素是否符合某种条件。
+ * @param ctx 谓词函数的上下文参数。
  * @param backward 是否从后往前查找。
  *
  * @return 包含则返回 true，不包含则返回 false。
  */
 bool darr_contains(
 	const darr_adt *darr,
-	const void *element,
-	int (*cmp)(const void *, const void *, void *),
+	bool (*predicate)(const void *, void *),
 	void *ctx,
 	bool backward
-) ATTRS_NONNULL(1, 2, 3);
+) ATTRS_NONNULL(1, 2);
 
 /**
- * @brief 查找一个「动态数组」中，与某个元素“相等”的元素。
+ * @brief 查找一个「动态数组」中，第一个符合某种条件的元素。。
  *
  * @param darr 目标「动态数组」的指针。
- * @param element 被比较元素的指针。
- * @param cmp 元素比较函数指针，其返回值因遵循 C 标准函数惯例
- * （两者相等返回 0，前者大于后者返回正值，前者小于后者返回负值）。
- * @param ctx 比较函数的上下文参数。
- * @param out_index 输出参数，存储查找到的索引。
+ * @param predicate 谓词函数，用于检查一个元素是否符合某种条件。
+ * @param ctx 谓词函数的上下文参数。
+ * @param out_index 输出参数，存储查找到的索引，当其不为空指针，且找到时，才会写入数据。
  * @param backward 是否从后往前查找。
  *
  * @return 找到则返回 true，未找到则返回 false。
  */
 bool darr_find(
-	darr_adt *darr,
-	const void *element,
-	int (*cmp)(const void *, const void *, void *),
-	void *ctx,
-	size_t *out_index,
-	bool backward
-) ATTRS_NONNULL(1, 2, 3);
-
-/**
- * @brief 查找一个「动态数组」中，符合某种条件的元素。
- *
- * @param darr 目标「动态数组」的指针。
- * @param predicate 谓词函数，用于检查一个元素是否符合某种条件。
- * （两者相等返回 0，前者大于后者返回正值，前者小于后者返回负值）。
- * @param ctx 谓词函数的上下文参数。
- * @param out_index 输出参数，存储查找到的索引。
- * @param backward 是否从后往前查找。
- *
- * @return 找到则返回 true，未找到则返回 false。
- */
-bool darr_find_if(
-	darr_adt *darr,
+	const darr_adt *darr,
 	bool (*predicate)(const void *, void *),
 	void *ctx,
 	size_t *out_index,
@@ -443,9 +423,45 @@ bool darr_find_if(
 ) ATTRS_NONNULL(1, 2);
 
 /**
+ * @brief 查找一个「动态数组」中，第 n 个符合某种条件的元素。
+ *
+ * @param darr 目标「动态数组」的指针。
+ * @param predicate 谓词函数，用于检查一个元素是否符合某种条件。
+ * @param ctx 谓词函数的上下文参数。
+ * @param n 出现的次序，从 1 开始。0 表示最后一次。
+ * @param out_index 输出参数，存储查找到的索引，当其不为空指针，且找到时，才会写入数据。
+ * @param backward 是否从后往前查找。
+ *
+ * @return 找到则返回 true，未找到则返回 false。
+ */
+bool darr_find_n(
+	const darr_adt *darr,
+	bool (*predicate)(const void *, void *),
+	void *ctx,
+	size_t n,
+	size_t *out_index,
+	bool backward
+) ATTRS_NONNULL(1, 2);
+
+/**
+ * @brief 统计一个「动态数组」中，符合某种条件的元素的个数。
+ *
+ * @param darr 目标「动态数组」的指针。
+ * @param predicate 谓词函数，用于检查一个元素是否符合某种条件。
+ * @param ctx 谓词函数的上下文参数。
+ *
+ * @return 统计到的个数。
+ */
+size_t darr_count(
+	const darr_adt *darr,
+	bool (*predicate)(const void *, void *),
+	void *ctx
+) ATTRS_NONNULL(1, 2);
+
+/**
  * @brief 使用二分查找法查找一个「动态数组」中，与某个元素“相等”的元素。
  *
- * @note 数组应该是有序的。
+ * @note 数组应该是有序的。适用于有序且元素唯一的数组。
  *
  * @param darr 目标「动态数组」的指针。
  * @param element 目标元素的指针。
