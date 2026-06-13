@@ -54,6 +54,27 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
+    - name: Install dependencies
+      run: |
+        cd ${{ github.workspace }}
+
+        # 安装 attrs
+        git clone https://github.com/mtueih/attrs.git deps/attrs
+        mkdir -p deps/attrs/build
+        cd deps/attrs/build
+        cmake .. -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/deps/install
+        cmake --build . --config ${{ matrix.build_type }}
+        cmake --install .
+
+        # 安装 safe_calc
+        cd ${{ github.workspace }}
+        git clone https://github.com/mtueih/safe_calc.git deps/safe_calc
+        mkdir -p deps/safe_calc/build
+        cd deps/safe_calc/build
+        cmake .. -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/deps/install
+        cmake --build . --config ${{ matrix.build_type }}
+        cmake --install .
+
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
@@ -62,6 +83,7 @@ jobs:
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DCMAKE_PREFIX_PATH=${{ github.workspace }}/deps/install
         -S ${{ github.workspace }}
 
     - name: Build
