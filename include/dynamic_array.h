@@ -184,7 +184,7 @@ int darr_set_capacity(
  * @note 如果该函数成功，则会同时修改「保底容量」。
  * 
  * @param darr 目标「动态数组」的指针。
- * @param new_capacity 目标容量。
+ *@param new_capacity 目标容量。
  * 
  * @return 全局状态码。
  */
@@ -204,7 +204,7 @@ int darr_reserve(
  */
 void darr_shrink_to_fit(
 	darr_adt *darr
-) ATTRS_NONNULL(1);
+) ATTRS_NONNULL(1); 
 
 /* 增减元素。 */
 

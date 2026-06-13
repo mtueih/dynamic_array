@@ -22,7 +22,7 @@
 #define DARR_EM_AT(darr, i) ((char *) (darr)->data + (i) * (darr)->em_sz)
 
 
-/* 「动态字符串」抽象数据类型定义。 */
+/* 「动态数组」抽象数据类型定义。 */
 struct dynamic_array {
 	/* 元素相关成员变量。 */
 	size_t em_sz; /* 元素大小。单个元素占用的空间大小，以字节为单位。 */
