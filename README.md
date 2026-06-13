@@ -13,7 +13,8 @@
 
 **依赖**：
 
-- [`attrs`](https://github.com/mtueih/attrs/)。
+- [`attrs`](https://github.com/mtueih/attrs)；
+- [`safe_calc`](https://github.com/mtueih/safe_calc)。
 
 ```bash
 # 克隆仓库。
