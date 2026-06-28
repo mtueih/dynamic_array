@@ -591,7 +591,7 @@ int darr_remove_n(
 		return DARR_INVALID_PARAM;
 	}
 	/* 检查 index + count 是否超过数组末尾。 */
-	if (!safe_size_add_test(index, count) || index + count > darr->len) {
+	if (!safe_size_t_add(index, count, DARR_NULLPTR) || index + count > darr->len) {
 		return DARR_INVALID_PARAM;
 	}
 
@@ -1114,7 +1114,7 @@ static bool capacity_resize(
 	size_t new_size;
 
 	/* 安全执行 size_t 乘法（new_len * darr->em_sz），防止溢出。 */
-	if (!safe_size_mul(new_len, darr->em_sz, &new_size)) {
+	if (!safe_size_t_mul(new_len, darr->em_sz, &new_size)) {
 		/* 如果发生溢出，则视为调整失败。 */
 		return false;
 	}
@@ -1184,7 +1184,7 @@ static bool capacity_resize_dynamic(
 
 	/* 先尝试预分配容量，如果预分配容量调整失败，再回退到「needed_len」本身。 */
 	/* 安全执行 size_t 加法（needed_len + needed_len >> 1），防止溢出。 */
-	if (safe_size_add(needed_len, needed_len >> 1, &adjusted_len)) {
+	if (safe_size_t_add(needed_len, needed_len >> 1, &adjusted_len)) {
 		/**
 		 * 如果加法计算没有溢出，那就执行调整。
 		 * 此处调用 capacity_resize 而不是 capacity_resize_regular，因为如果是扩容，「adjusted_len」不可能是 0。
@@ -1210,7 +1210,7 @@ static int elements_insert(
 	size_t new_len; /* darr->len + count */
 
 	/* 安全执行 size_t 加法（darr->len + count），防止溢出。 */
-	if (!safe_size_add(darr->len, count, &new_len)) {
+	if (!safe_size_t_add(darr->len, count, &new_len)) {
 		/* 溢出。 */
 		return DARR_OVERFLOW;
 	}
