@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.21)
 project(dynamic_array VERSION 1.0.0 LANGUAGES C)
 
 # 引入标准 CMake 模块用于安装和包配置。
@@ -6,13 +6,11 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 # 查找/声明依赖包。
-find_package(attrs REQUIRED)
 find_package(safe_calc REQUIRED)
 
 # 创建库目标（静态库）。
 add_library(dynamic_array STATIC src/dynamic_array.c)
 add_library(dynamic_array::dynamic_array ALIAS dynamic_array)
-target_link_libraries(dynamic_array PUBLIC attrs::attrs)
 target_link_libraries(dynamic_array PRIVATE safe_calc::safe_calc)
 
 # 添加测试可执行文件（仅用于开发测试，不安装）。

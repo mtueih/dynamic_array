@@ -1,7 +1,7 @@
 # dynamic_array
 
-[![C Standard](https://img.shields.io/badge/C-C99/C11/C17/C23-blue.svg)](https://cppreference.cn/w/c)
-[![CMake](https://img.shields.io/badge/CMake-3.14+-green.svg)](https://cmake.org/)
+[![C Standard](https://img.shields.io/badge/C-C99/C11/C17/C23-blue.svg)](https://zh.cppreference.com/c)
+[![CMake](https://img.shields.io/badge/CMake-3.21+-green.svg)](https://cmake.org/)
 [![GitHub License](https://img.shields.io/github/license/mtueih/dynamic_array)](LICENSE)
 [![CMake on multiple platforms](https://github.com/mtueih/dynamic_array/actions/workflows/cmake-multi-platform.yml/badge.svg)](https://github.com/mtueih/dynamic_array/actions/workflows/cmake-multi-platform.yml)
 
@@ -9,11 +9,10 @@
 
 **环境要求**：
 
-- CMake 3.14 或更高版本。
+- CMake 3.21 或更高版本。
 
 **依赖**：
 
-- [`attrs`](https://github.com/mtueih/attrs)；
 - [`safe_calc`](https://github.com/mtueih/safe_calc)。
 
 ```bash
@@ -44,4 +43,4 @@ target_link_libraries(your_target PRIVATE dynamic_array::dynamic_array)
 
 ## 许可协议
 
-本项目采用 [GNU 通用公共许可证 v3.0](https://www.gnu.org/licenses/gpl-3.0.en.html) 授权——详情请参阅 [LICENSE](LICENSE) 文件。
+本项目采用 [GNU 通用公共许可证 v3.0](https://www.gnu.org/licenses/gpl-3.0.html) 授权——详情请参阅 [LICENSE](LICENSE) 文件。

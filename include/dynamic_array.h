@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2026 mtueih
+ * Copyright (C) 2026 mtueih
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,10 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+
 #ifndef DYNAMIC_ARRAY_H
 #define DYNAMIC_ARRAY_H
 
-#include <attrs.h>
 #include <errno.h>
 #include <stddef.h>
 
@@ -26,6 +26,7 @@
 #if !defined(__STDC_VERSION__) || (defined(__STDC_VERSION__) && __STDC_VERSION__ < 202311L)
 #  include <stdbool.h>
 #endif
+
 
 /* ADT 类型别名声明。 */
 typedef struct dynamic_array darr_adt;
@@ -57,7 +58,6 @@ enum {
  *
  * @return 所创建的「动态数组」的指针，如果创建失败则返回「空指针」。
  */
-ATTRS_NODISCARD_SIMPLE
 darr_adt *darr_create(
 	size_t element_size,
 	size_t length
@@ -70,7 +70,7 @@ darr_adt *darr_create(
  */
 void darr_destroy(
 	darr_adt *darr
-) ATTRS_NONNULL(1);
+);
 
 /**
  * @brief 清空一个「动态数组」。
@@ -81,7 +81,7 @@ void darr_destroy(
  */
 void darr_clear(
 	darr_adt *darr
-) ATTRS_NONNULL(1);
+);
 
 /* 属性获取与设置，以及元素访问。 */
 
@@ -94,7 +94,7 @@ void darr_clear(
  */
 void *darr_carr(
 	darr_adt *darr
-) ATTRS_NONNULL(1);
+);
 
 /**
  * @brief 获取一个「动态数组」的内部「C 数组」指针（const）。
@@ -105,7 +105,7 @@ void *darr_carr(
  */
 const void *darr_carr_const(
 	const darr_adt *darr
-) ATTRS_NONNULL(1);
+);
 
 /**
  * @brief 获取一个「动态数组」的某个位置处的元素的指针（非 const）。
@@ -118,7 +118,7 @@ const void *darr_carr_const(
 void *darr_at(
 	darr_adt *darr,
 	size_t index
-) ATTRS_NONNULL(1);
+);
 
 /**
  * @brief 获取一个「动态数组」的某个位置处的元素的指针（const）。
@@ -131,7 +131,7 @@ void *darr_at(
 const void *darr_at_const(
 	const darr_adt *darr,
 	size_t index
-) ATTRS_NONNULL(1);
+);
 
 /**
  * @brief 获取一个「动态数组」的元素大小（单个元素占用的空间大小，以字节为单位）。
@@ -142,7 +142,7 @@ const void *darr_at_const(
  */
 size_t darr_element_size(
 	const darr_adt *darr
-) ATTRS_NONNULL(1);
+);
 
 /**
  * @brief 获取一个「动态数组」的长度（元素个数）。
@@ -153,7 +153,7 @@ size_t darr_element_size(
  */
 size_t darr_length(
 	const darr_adt *darr
-) ATTRS_NONNULL(1);
+);
 
 /**
  * @brief 判断一个「动态数组」是否是空数组。
@@ -164,7 +164,7 @@ size_t darr_length(
  */
 bool darr_is_empty(
 	const darr_adt *darr
-) ATTRS_NONNULL(1);
+);
 
 /**
  * @brief 获取一个「动态数组」的容量（能够存放的元素个数，以元素个数为单位）。
@@ -175,7 +175,7 @@ bool darr_is_empty(
  */
 size_t darr_capacity(
 	const darr_adt *darr
-) ATTRS_NONNULL(1);
+);
 
 /**
  * @brief 设置一个「动态数组」的容量（能够存放的元素个数，以元素个数为单位）。
@@ -192,7 +192,7 @@ size_t darr_capacity(
 int darr_set_capacity(
 	darr_adt *darr,
 	size_t new_capacity
-) ATTRS_NONNULL(1);
+);
 
 /**
  * @brief 预留一个「动态数组」的容量。
@@ -208,7 +208,7 @@ int darr_set_capacity(
 int darr_reserve(
 	darr_adt *darr,
 	size_t new_capacity
-) ATTRS_NONNULL(1);
+);
 
 /**
  * @brief 调整一个「动态数组」的容量到刚合适（即容量等于元素个数）。
@@ -221,7 +221,7 @@ int darr_reserve(
  */
 void darr_shrink_to_fit(
 	darr_adt *darr
-) ATTRS_NONNULL(1); 
+); 
 
 /* 增减元素。 */
 
@@ -236,7 +236,7 @@ void darr_shrink_to_fit(
 int darr_append(
 	darr_adt *darr,
 	const void *element
-) ATTRS_NONNULL(1, 2);
+);
 
 /**
  * @brief 追加多个元素到一个「动态数组」末尾。
@@ -251,7 +251,7 @@ int darr_append_n(
 	darr_adt *darr,
 	const void *elements,
 	size_t count
-) ATTRS_NONNULL(1, 2);
+);
 
 /**
  * @brief 追加一个元素到一个「动态数组」开头。
@@ -264,7 +264,7 @@ int darr_append_n(
 int darr_prepend(
 	darr_adt *darr,
 	const void *element
-) ATTRS_NONNULL(1, 2);
+);
 
 /**
  * @brief 追加多个元素到一个「动态数组」开头。
@@ -279,7 +279,7 @@ int darr_prepend_n(
 	darr_adt *darr,
 	const void *elements,
 	size_t count
-) ATTRS_NONNULL(1, 2);
+);
 
 /**
  * @brief 插入一个元素到一个「动态数组」的指定位置处。
@@ -294,7 +294,7 @@ int darr_insert(
 	darr_adt *darr,
 	size_t index,
 	const void *element
-) ATTRS_NONNULL(1, 3);
+);
 
 /**
  * @brief 插入多个元素到一个「动态数组」的指定位置处。
@@ -311,7 +311,7 @@ int darr_insert_n(
 	size_t index,
 	const void *elements,
 	size_t count
-) ATTRS_NONNULL(1, 3);
+);
 
 /**
  * @brief 删除一个「动态数组」中指定位置处的某个元素。
@@ -324,7 +324,7 @@ int darr_insert_n(
 int darr_remove(
 	darr_adt *darr,
 	size_t index
-) ATTRS_NONNULL(1);
+);
 
 /**
  * @brief 删除一个「动态数组」中从指定位置处起，向后的多个元素。
@@ -339,7 +339,7 @@ int darr_remove_n(
 	darr_adt *darr,
 	size_t index,
 	size_t count
-) ATTRS_NONNULL(1);
+);
 
 /* 元素操作。 */
 
@@ -371,7 +371,7 @@ int darr_swap(
  */
 darr_adt *darr_clone(
 	const darr_adt *darr
-) ATTRS_NONNULL(1);
+);
 
 /* 遍历。 */
 
@@ -388,7 +388,7 @@ void darr_foreach(
 	void (*func)(void *, void *),
 	void *ctx,
 	bool backward
-) ATTRS_NONNULL(1, 2);
+);
 
 /**
  * @brief 遍历一个「动态数组」（const）。
@@ -403,7 +403,7 @@ void darr_foreach_const(
 	void (*func)(const void *, void *),
 	void *ctx,
 	bool backward
-) ATTRS_NONNULL(1, 2);
+);
 
 /* 查询、查找。 */
 
@@ -422,7 +422,7 @@ bool darr_contains(
 	bool (*predicate)(const void *, void *),
 	void *ctx,
 	bool backward
-) ATTRS_NONNULL(1, 2);
+);
 
 /**
  * @brief 查找一个「动态数组」中，第一个符合某种条件的元素。。
@@ -441,7 +441,7 @@ bool darr_find(
 	void *ctx,
 	size_t *out_index,
 	bool backward
-) ATTRS_NONNULL(1, 2);
+);
 
 /**
  * @brief 查找一个「动态数组」中，第 n 个符合某种条件的元素。
@@ -462,7 +462,7 @@ bool darr_find_n(
 	size_t n,
 	size_t *out_index,
 	bool backward
-) ATTRS_NONNULL(1, 2);
+);
 
 /**
  * @brief 统计一个「动态数组」中，符合某种条件的元素的个数。
@@ -477,7 +477,7 @@ size_t darr_count(
 	const darr_adt *darr,
 	bool (*predicate)(const void *, void *),
 	void *ctx
-) ATTRS_NONNULL(1, 2);
+);
 
 /**
  * @brief 使用二分查找法查找一个「动态数组」中，与某个元素“相等”的元素。
@@ -501,7 +501,7 @@ bool darr_find_binary(
 	void *ctx,
 	size_t *out_index,
 	bool desc
-) ATTRS_NONNULL(1, 2, 3);
+);
 
 /* 排序、反转。 */
 
@@ -523,7 +523,7 @@ int darr_sort(
 	int (*cmp)(const void *, const void *, void *),
 	void *ctx,
 	bool desc
-) ATTRS_NONNULL(1, 2);
+);
 
 /**
  * @brief 对一个「动态数组」进行反转。
@@ -534,6 +534,6 @@ int darr_sort(
  */
 int darr_reverse(
 	darr_adt *darr
-) ATTRS_NONNULL(1);
+);
 
 #endif /* DYNAMIC_ARRAY_H */

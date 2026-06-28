@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2026 mtueih
+ * Copyright (C) 2026 mtueih
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -74,7 +74,7 @@ struct dynamic_array {
 static bool capacity_resize(
 	darr_adt *darr,
 	size_t new_len
-) ATTRS_NONNULL(1);
+);
 
 /**
  * @brief 常规调整一个「动态数组」的容量。
@@ -89,7 +89,7 @@ static bool capacity_resize(
 static bool capacity_resize_regular(
 	darr_adt *darr,
 	size_t new_len
-) ATTRS_NONNULL(1);
+);
 
 /**
  * @brief 动态调整一个「动态数组」的容量。
@@ -104,7 +104,7 @@ static bool capacity_resize_regular(
 static bool capacity_resize_dynamic(
 	darr_adt *darr,
 	size_t new_len
-) ATTRS_NONNULL(1);
+);
 
 /* 元素操作。 */
 
@@ -125,7 +125,7 @@ static int elements_insert(
 	size_t index,
 	const void *elements,
 	size_t count
-) ATTRS_NONNULL(1, 3);
+);
 
 /**
  * @brief 删除一个「动态数组」中的若干元素。
@@ -138,7 +138,7 @@ static void elements_remove(
 	darr_adt *darr,
 	size_t index,
 	size_t count
-) ATTRS_NONNULL(1);
+);
 
 /* 排序算法实现。 */
 
@@ -158,7 +158,7 @@ static int insertion_sort(
 	int (*cmp)(const void *, const void *, void *),
 	void *ctx,
 	bool desc
-) ATTRS_NONNULL(1, 2);
+);
 
 /**
  * @brief 对一个「动态数组」进行归并排序。
@@ -176,7 +176,7 @@ static int merge_sort(
 	int (*cmp)(const void *, const void *, void *),
 	void *ctx,
 	bool desc
-) ATTRS_NONNULL(1, 2);
+);
 
 
 /***************************************************************
