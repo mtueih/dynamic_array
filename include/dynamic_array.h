@@ -32,13 +32,12 @@
 typedef struct dynamic_array darr_adt;
 
 /* 全局状态码。 */
-enum {
+typedef enum {
 	DARR_SUCCESS = 0,                  /* 成功。 */
 	DARR_MEMORY_ALLOC_FAILED = ENOMEM, /* 内存分配失败。 */
 	DARR_INVALID_PARAM = EINVAL,       /* 无效参数。 */
-	DARR_OVERFLOW = ERANGE,            /* 计算溢出。 */
 	DARR_UNKNOWN_ERROR,                /* 未知错误。 */
-};
+} darr_status_t;
 
 
 /***************************************************************
@@ -189,7 +188,7 @@ size_t darr_capacity(
  * 
  * @return 全局状态码。
  */
-int darr_set_capacity(
+darr_status_t darr_set_capacity(
 	darr_adt *darr,
 	size_t new_capacity
 );
@@ -205,7 +204,7 @@ int darr_set_capacity(
  * 
  * @return 全局状态码。
  */
-int darr_reserve(
+darr_status_t darr_reserve(
 	darr_adt *darr,
 	size_t new_capacity
 );
@@ -233,7 +232,7 @@ void darr_shrink_to_fit(
  * 
  * @return 全局状态码。
  */
-int darr_append(
+darr_status_t darr_append(
 	darr_adt *darr,
 	const void *element
 );
@@ -247,7 +246,7 @@ int darr_append(
  * 
  * @return 全局状态码。
  */
-int darr_append_n(
+darr_status_t darr_append_n(
 	darr_adt *darr,
 	const void *elements,
 	size_t count
@@ -261,7 +260,7 @@ int darr_append_n(
  * 
  * @return 全局状态码。
  */
-int darr_prepend(
+darr_status_t darr_prepend(
 	darr_adt *darr,
 	const void *element
 );
@@ -275,7 +274,7 @@ int darr_prepend(
  * 
  * @return 全局状态码。
  */
-int darr_prepend_n(
+darr_status_t darr_prepend_n(
 	darr_adt *darr,
 	const void *elements,
 	size_t count
@@ -290,7 +289,7 @@ int darr_prepend_n(
  * 
  * @return 全局状态码。
  */
-int darr_insert(
+darr_status_t darr_insert(
 	darr_adt *darr,
 	size_t index,
 	const void *element
@@ -306,7 +305,7 @@ int darr_insert(
  * 
  * @return 全局状态码。
  */
-int darr_insert_n(
+darr_status_t darr_insert_n(
 	darr_adt *darr,
 	size_t index,
 	const void *elements,
@@ -321,7 +320,7 @@ int darr_insert_n(
  *
  * @return 全局状态码。
  */
-int darr_remove(
+darr_status_t darr_remove(
 	darr_adt *darr,
 	size_t index
 );
@@ -335,7 +334,7 @@ int darr_remove(
  *
  * @return 全局状态码。
  */
-int darr_remove_n(
+darr_status_t darr_remove_n(
 	darr_adt *darr,
 	size_t index,
 	size_t count
@@ -352,7 +351,7 @@ int darr_remove_n(
  *
  * @return 全局状态码。
  */
-int darr_swap(
+darr_status_t darr_swap(
 	darr_adt *darr,
 	size_t index_1,
 	size_t index_2
@@ -518,7 +517,7 @@ bool darr_find_binary(
  * @param ctx 比较函数的上下文参数。
  * @param desc 是否进行逆序排序。
  */
-int darr_sort(
+darr_status_t darr_sort(
 	darr_adt *darr,
 	int (*cmp)(const void *, const void *, void *),
 	void *ctx,
@@ -532,7 +531,7 @@ int darr_sort(
  *
  * @return 全局状态码。
  */
-int darr_reverse(
+darr_status_t darr_reverse(
 	darr_adt *darr
 );
 

@@ -6,6 +6,6 @@ include(CMakeFindDependencyMacro)
 find_dependency(safe_calc REQUIRED)
 
 
-include("${CMAKE_CURRENT_LIST_DIR}/dynamic_arrayTargets.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/@MAIN_PACKAGE_NAME@Targets.cmake")
 
-check_required_components(dynamic_array)
+check_required_components(@MAIN_PACKAGE_NAME@)

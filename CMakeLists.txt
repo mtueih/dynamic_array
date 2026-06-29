@@ -8,7 +8,11 @@
 #   4. 测试入口（CTest）
 # ==============================================================================
 cmake_minimum_required(VERSION 3.21)
-project(dynamic_array VERSION 1.0.0 LANGUAGES C)
+project(dynamic_array
+	VERSION 1.0.0
+	LANGUAGES C
+)
+
 
 # ------------------------------------------------------------------------
 # 核心模块
@@ -23,68 +27,67 @@ include(CMakePackageConfigHelpers)
 # 查找/声明依赖包
 find_package(safe_calc REQUIRED)
 
+set(MAIN_PACKAGE_NAME ${PROJECT_NAME})
+set(MAIN_LIB_TARGET_NAME ${PROJECT_NAME})
+
+
 # ------------------------------------------------------------------------
 # 构建目标
 # ------------------------------------------------------------------------
 add_subdirectory(src)
 
-# ------------------------------------------------------------------------
-# 安装规则
-# ------------------------------------------------------------------------
 
-# 公共头文件
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
-	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-	FILES_MATCHING PATTERN "*.h"
-)
+# -----------------------------------------------------------------------------
+# 测试
+# -----------------------------------------------------------------------------
+# 控制测试构建行为。仅在启用 BUILD_TESTING 时添加 tests 子目录并注册测试。
+#
+# 若需跳过测试构建，可在命令行或打包流程中使用 -DBUILD_TESTING=OFF。
+# -----------------------------------------------------------------------------
+if (BUILD_TESTING)
+	add_subdirectory(tests)
+endif ()
 
-# 库文件及 EXPORT 定义（dynamic_arrayTargets）
-# 同时指定 INCLUDES DESTINATION，使下游 find_package 后自动获得头文件路径
-install(TARGETS dynamic_array
-	EXPORT dynamic_arrayTargets
-	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-	INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
+
+# -----------------------------------------------------------------------------
+# 包配置与安装
+# -----------------------------------------------------------------------------
+# 生成并安装供 find_package 导入的 CMake 包配置文件，并导出构建目标。
+#
+# 生成的文件包括：
+#
+#   1. safe_calcConfig.cmake
+#      包入口配置文件，用于在下游项目中定位并导入导出目标。
+#
+#   2. safe_calcConfigVersion.cmake
+#      用于在 find_package 时进行版本兼容性检查（SameMajorVersion）。
+# -----------------------------------------------------------------------------
 
 # 安装 EXPORT 目标文件
-# 下游通过 find_package(dynamic_array) 即可导入 dynamic_array::dynamic_array 目标
-install(EXPORT dynamic_arrayTargets
-	FILE dynamic_arrayTargets.cmake
-	NAMESPACE dynamic_array::
-	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/dynamic_array
+# 下游通过 find_package(safe_calc) 即可导入 safe_calc::safe_calc 目标
+install(EXPORT ${MAIN_PACKAGE_NAME}Targets
+	FILE ${MAIN_PACKAGE_NAME}Targets.cmake
+	NAMESPACE ${MAIN_PACKAGE_NAME}::
+	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${MAIN_PACKAGE_NAME}
 )
 
-# ------------------------------------------------------------------------
-# CMake 包配置（find_package 支持）
-# ------------------------------------------------------------------------
-
-# 从 .in 模板生成 dynamic_arrayConfig.cmake
+# 从模板生成包配置文件。
 configure_package_config_file(
-	${PROJECT_SOURCE_DIR}/cmake/dynamic_arrayConfig.cmake.in
-	${CMAKE_CURRENT_BINARY_DIR}/dynamic_arrayConfig.cmake
-	INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/dynamic_array
+	${PROJECT_SOURCE_DIR}/cmake/${MAIN_PACKAGE_NAME}Config.cmake.in
+	${PROJECT_BINARY_DIR}/${MAIN_PACKAGE_NAME}Config.cmake
+	INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${MAIN_PACKAGE_NAME}
 )
 
-# 生成版本兼容文件，策略：SameMajorVersion
+# 生成版本兼容性检查文件。
 write_basic_package_version_file(
-	"${CMAKE_CURRENT_BINARY_DIR}/dynamic_arrayConfigVersion.cmake"
+	${PROJECT_BINARY_DIR}/${MAIN_PACKAGE_NAME}ConfigVersion.cmake
 	VERSION ${PROJECT_VERSION}
 	COMPATIBILITY SameMajorVersion
 )
 
-
-# 安装 Config + Version 文件至包搜索路径
+# 将生成的包配置文件安装到标准 CMake 包目录。
 install(FILES
-	${CMAKE_CURRENT_BINARY_DIR}/dynamic_arrayConfig.cmake
-	${CMAKE_CURRENT_BINARY_DIR}/dynamic_arrayConfigVersion.cmake
-	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/dynamic_array
+	${PROJECT_BINARY_DIR}/${MAIN_PACKAGE_NAME}Config.cmake
+	${PROJECT_BINARY_DIR}/${MAIN_PACKAGE_NAME}ConfigVersion.cmake
+	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${MAIN_PACKAGE_NAME}
 )
-
-# ------------------------------------------------------------------------
-# 测试
-# ------------------------------------------------------------------------
-if (BUILD_TESTING)
-	add_subdirectory(tests)
-endif ()

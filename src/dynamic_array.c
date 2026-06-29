@@ -29,7 +29,8 @@
 #  define DARR_NULLPTR NULL
 #endif
 
-/* 排序算法阈值。当数组元素大于此值时使用适用于较大数据量的「归并排序」算法，否则使用适用于较小数据量的「插入排序」算法。 */
+/* 排序算法阈值。当数组元素大于此值时使用适用于较大数据量的「归并排序」算法，
+ * 否则使用适用于较小数据量的「插入排序」算法。 */
 #define DARR_SORT_THRESHOLD 16
 
 #define DARR_MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -120,7 +121,7 @@ static bool capacity_resize_dynamic(
  *
  * @return 全局状态码。
  */
-static int elements_insert(
+static darr_status_t elements_insert(
 	darr_adt *darr,
 	size_t index,
 	const void *elements,
@@ -153,7 +154,7 @@ static void elements_remove(
  *
  * @return 全局状态码。
  */
-static int insertion_sort(
+static darr_status_t insertion_sort(
 	darr_adt *darr,
 	int (*cmp)(const void *, const void *, void *),
 	void *ctx,
@@ -171,7 +172,7 @@ static int insertion_sort(
  *
  * @return 全局状态码。
  */
-static int merge_sort(
+static darr_status_t merge_sort(
 	darr_adt *darr,
 	int (*cmp)(const void *, const void *, void *),
 	void *ctx,
@@ -238,8 +239,10 @@ darr_adt *darr_create(
 void darr_destroy(
 	darr_adt *const darr
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR) {
+		return;
+	}
 
 	/* 如果「darr->data」不为空指针，则释放。 */
 	if (darr->data != DARR_NULLPTR) {
@@ -253,8 +256,10 @@ void darr_destroy(
 void darr_clear(
 	darr_adt *const darr
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR) {
+		return;
+	}
 
 	/**
 	 * 清空「动态数组」，不会“立即”对内存以及数据做出改动。
@@ -268,8 +273,10 @@ void darr_clear(
 void *darr_carr(
 	darr_adt *const darr
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR) {
+		return DARR_NULLPTR;
+	}
 
 	return darr->data;
 }
@@ -277,8 +284,10 @@ void *darr_carr(
 const void *darr_carr_const(
 	const darr_adt *const darr
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR) {
+		return DARR_NULLPTR;
+	}
 
 	return darr->data;
 }
@@ -287,8 +296,10 @@ void *darr_at(
 	darr_adt *const darr,
 	const size_t index
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR) {
+		return DARR_NULLPTR;
+	}
 
 	/* 检查索引是否越界。 */
 	if (index >= darr->len) {
@@ -302,8 +313,10 @@ const void *darr_at_const(
 	const darr_adt *const darr,
 	const size_t index
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR) {
+		return DARR_NULLPTR;
+	}
 
 	/* 检查索引是否越界。 */
 	if (index >= darr->len) {
@@ -316,8 +329,10 @@ const void *darr_at_const(
 size_t darr_element_size(
 	const darr_adt *const darr
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR) {
+		return 0;
+	}
 
 	return darr->em_sz;
 }
@@ -325,8 +340,10 @@ size_t darr_element_size(
 size_t darr_length(
 	const darr_adt *const darr
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR) {
+		return 0;
+	}
 
 	return darr->len;
 }
@@ -334,8 +351,10 @@ size_t darr_length(
 bool darr_is_empty(
 	const darr_adt *const darr
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR) {
+		return true;
+	}
 
 	return darr->len == 0;
 }
@@ -343,18 +362,22 @@ bool darr_is_empty(
 size_t darr_capacity(
 	const darr_adt *const darr
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR) {
+		return 0;
+	}
 
 	return darr->cap;
 }
 
-int darr_set_capacity(
+darr_status_t darr_set_capacity(
 	darr_adt *const darr,
 	const size_t new_capacity
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR) {
+		return DARR_INVALID_PARAM;
+	}
 
 	/* 如果 new_capacity 等于当前容量的话，什么也不用做，直接返回成功。 */
 	if (new_capacity == darr->cap) {
@@ -388,12 +411,14 @@ int darr_set_capacity(
 	return DARR_SUCCESS;
 }
 
-int darr_reserve(
+darr_status_t darr_reserve(
 	darr_adt *const darr,
 	const size_t new_capacity
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR) {
+		return DARR_INVALID_PARAM;
+	}
 
 	/* 如果 new_capacity 等于当前容量的话，什么也不用做，直接返回成功。 */
 	if (new_capacity == darr->cap) {
@@ -425,8 +450,10 @@ int darr_reserve(
 void darr_shrink_to_fit(
 	darr_adt *const darr
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR) {
+		return;
+	}
 
 	/**
 	 * 执行此函数，无论实际调整成功与否，都将「min_cap」的值置为 0。
@@ -450,13 +477,14 @@ void darr_shrink_to_fit(
 
 /* 增减元素。 */
 
-int darr_append(
+darr_status_t darr_append(
 	darr_adt *const darr,
 	const void *const element
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
-	assert(element != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR || element == DARR_NULLPTR) {
+		return DARR_INVALID_PARAM;
+	}
 
 	/**
 	 * 由于所有增减元素函数执行操作都大体不差，并且考虑到可维护性，
@@ -466,14 +494,15 @@ int darr_append(
 	return elements_insert(darr, darr->len, element, 1);
 }
 
-int darr_append_n(
+darr_status_t darr_append_n(
 	darr_adt *const darr,
 	const void *const elements,
 	const size_t count
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
-	assert(elements != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR || elements == DARR_NULLPTR) {
+		return DARR_INVALID_PARAM;
+	}
 
 	/* 参数检查。 */
 	/* 检查 count 是否为 0，如果为 0，视为什么都不追加，那么操作是一定成功的。 */
@@ -485,26 +514,28 @@ int darr_append_n(
 	return elements_insert(darr, darr->len, elements, count);
 }
 
-int darr_prepend(
+darr_status_t darr_prepend(
 	darr_adt *const darr,
 	const void *const element
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
-	assert(element != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR || element == DARR_NULLPTR) {
+		return DARR_INVALID_PARAM;
+	}
 
 	/* 在数组开头追加一个元素，等价于在开头（下标为「0」的位置）插入一个元素。 */
 	return elements_insert(darr, 0, element, 1);
 }
 
-int darr_prepend_n(
+darr_status_t darr_prepend_n(
 	darr_adt *const darr,
 	const void *const elements,
 	const size_t count
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
-	assert(elements != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR || elements == DARR_NULLPTR) {
+		return DARR_INVALID_PARAM;
+	}
 
 	/* 参数检查。 */
 	/* 检查 count 是否为 0，如果为 0，视为什么都不追加，那么操作是一定成功的。 */
@@ -516,14 +547,15 @@ int darr_prepend_n(
 	return elements_insert(darr, 0, elements, count);
 }
 
-int darr_insert(
+darr_status_t darr_insert(
 	darr_adt *const darr,
 	const size_t index,
 	const void *const element
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
-	assert(element != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR || element == DARR_NULLPTR) {
+		return DARR_INVALID_PARAM;
+	}
 
 	/* 参数检查。 */
 	/* 检查下标是否越界。（对于插入操作，索引等于「darr->len」是可以的，相当于尾部追加。） */
@@ -535,15 +567,16 @@ int darr_insert(
 	return elements_insert(darr, index, element, 1);
 }
 
-int darr_insert_n(
+darr_status_t darr_insert_n(
 	darr_adt *const darr,
 	const size_t index,
 	const void *const elements,
 	const size_t count
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
-	assert(elements != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR || elements == DARR_NULLPTR) {
+		return DARR_INVALID_PARAM;
+	}
 
 	/* 参数检查。 */
 	/* 检查下标是否越界。（对于插入操作，索引等于「darr->len」是可以的，相当于尾部追加。） */
@@ -559,12 +592,14 @@ int darr_insert_n(
 	return elements_insert(darr, index, elements, count);
 }
 
-int darr_remove(
+darr_status_t darr_remove(
 	darr_adt *const darr,
 	const size_t index
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR) {
+		return DARR_INVALID_PARAM;
+	}
 
 	/* 参数检查。 */
 	/* 检查下标是否越界。 */
@@ -577,13 +612,15 @@ int darr_remove(
 	return DARR_SUCCESS;
 }
 
-int darr_remove_n(
+darr_status_t darr_remove_n(
 	darr_adt *const darr,
 	const size_t index,
 	const size_t count
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR) {
+		return DARR_INVALID_PARAM;
+	}
 
 	/* 参数检查。 */
 	/* 检查下标是否越界。 */
@@ -602,7 +639,7 @@ int darr_remove_n(
 
 /* 元素操作。 */
 
-int darr_swap(
+darr_status_t darr_swap(
 	darr_adt *const darr,
 	const size_t index_1,
 	const size_t index_2
@@ -611,8 +648,10 @@ int darr_swap(
 	void *elem_1, *elem_2;
 	bool hasFreeCap;
 
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR) {
+		return DARR_INVALID_PARAM;
+	}
 
 	/* 参数检查。 */
 	/* 检查下标是否越界。 */
@@ -661,8 +700,10 @@ darr_adt *darr_clone(
 ) {
 	darr_adt *new_darr;
 
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR) {
+		return DARR_NULLPTR;
+	}
 
 	/* 为新的「动态数组」容器分配内存。 */
 	new_darr = malloc(sizeof(darr_adt));
@@ -710,9 +751,10 @@ void darr_foreach(
 	char *end, *start;
 	size_t darr_em_sz;
 
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
-	assert(func != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR || func == DARR_NULLPTR) {
+		return;
+	}
 
 	/* 参数检查。 */
 	/* 如果数组为空，则直接返回。 */
@@ -745,9 +787,10 @@ void darr_foreach_const(
 	const char *end, *start;
 	size_t darr_em_sz;
 
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
-	assert(func != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR || func == DARR_NULLPTR) {
+		return;
+	}
 
 	/* 参数检查。 */
 	/* 如果数组为空，则直接返回。 */
@@ -782,9 +825,10 @@ bool darr_contains(
 	const char *end, *start;
 	size_t darr_em_sz;
 
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
-	assert(predicate != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR || predicate == DARR_NULLPTR) {
+		return false;
+	}
 
 	/* 参数检查。 */
 	/* 如果数组为空，则一定不包含。 */
@@ -824,9 +868,10 @@ bool darr_find(
 	const char *end, *start;
 	size_t darr_em_sz;
 
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
-	assert(predicate != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR || predicate == DARR_NULLPTR) {
+		return false;
+	}
 
 	/* 参数检查。 */
 	/* 如果数组为空，则一定不包含。 */
@@ -875,9 +920,10 @@ bool darr_find_n(
 	size_t find_count;
 	size_t darr_em_sz;
 
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
-	assert(predicate != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR || predicate == DARR_NULLPTR) {
+		return false;
+	}
 
 	/* 参数检查。 */
 	/* 如果数组为空，则一定不包含。 */
@@ -937,9 +983,10 @@ size_t darr_count(
 	size_t count;
 	size_t darr_em_sz;
 
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
-	assert(predicate != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR || predicate == DARR_NULLPTR) {
+		return 0;
+	}
 
 	/* 参数检查。 */
 	/* 如果数组为空，则一定不包含。 */
@@ -972,10 +1019,10 @@ bool darr_find_binary(
 	size_t mid, left, right;
 	int ret;
 
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
-	assert(element != DARR_NULLPTR);
-	assert(cmp != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR || element == DARR_NULLPTR || cmp == DARR_NULLPTR) {
+		return false;
+	}
 
 	/* 参数检查。 */
 	/* 如果数组为空，则一定不包含。 */
@@ -1020,15 +1067,16 @@ finded:
 
 /* 排序、反转。 */
 
-int darr_sort(
+darr_status_t darr_sort(
 	darr_adt *const darr,
 	int (*const cmp)(const void *, const void *, void *),
 	void *const ctx,
 	const bool desc
 ) {
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
-	assert(cmp != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR || cmp == DARR_NULLPTR) {
+		return DARR_INVALID_PARAM;
+	}
 
 	/* 参数检查 */
 	/* 如果数组元素不足 2 个，那么就无需进行排序。 */
@@ -1047,15 +1095,17 @@ int darr_sort(
 	return insertion_sort(darr, cmp, ctx, desc);
 }
 
-int darr_reverse(
+darr_status_t darr_reverse(
 	darr_adt *const darr
 ) {
 	char *p, *q;
 	char *tmp;
 	bool has_free_cap;
 
-	/* 开发阶段参数检查。 */
-	assert(darr != DARR_NULLPTR);
+	/* 参数检查。 */
+	if (darr == DARR_NULLPTR) {
+		return DARR_INVALID_PARAM;
+	}
 
 	/* 参数检查。 */
 	/* 如果「动态数组」元素个数小于 2，那么无需反转，直接返回。 */
@@ -1201,7 +1251,7 @@ static bool capacity_resize_dynamic(
 
 /* 元素操作。 */
 
-static int elements_insert(
+static darr_status_t elements_insert(
 	darr_adt *const darr,
 	const size_t index,
 	const void *const elements,
@@ -1212,7 +1262,7 @@ static int elements_insert(
 	/* 安全执行 size_t 加法（darr->len + count），防止溢出。 */
 	if (!safe_size_t_add(darr->len, count, &new_len)) {
 		/* 溢出。 */
-		return DARR_OVERFLOW;
+		return DARR_MEMORY_ALLOC_FAILED;
 	}
 
 	/**
@@ -1277,7 +1327,7 @@ static void elements_remove(
 
 /* 排序算法实现。 */
 
-static int insertion_sort(
+static darr_status_t insertion_sort(
 	darr_adt *const darr,
 	int (*const cmp)(const void *, const void *, void *),
 	void *const ctx,
@@ -1331,7 +1381,7 @@ static int insertion_sort(
 	return DARR_SUCCESS;
 }
 
-static int merge_sort(
+static darr_status_t merge_sort(
 	darr_adt *const darr,
 	int (*const cmp)(const void *, const void *, void *),
 	void *const ctx,
