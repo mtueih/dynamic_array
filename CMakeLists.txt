@@ -2,10 +2,11 @@
 # dynamic_array — 顶层 CMake 构建脚本
 # ==============================================================================
 # 职责：
-#   1. 项目声明与核心模块引入
-#   2. 子目录构建目标编排
-#   3. 安装规则（头文件 / 库 / CMake 包配置）
-#   4. 测试入口（CTest）
+#   1. 项目声明。
+#   2. 模块引入与依赖处理。
+#   3. 全局变量定义。
+#   4. 源码与测试构建。
+#   5. 生成/安装项目目标集文件、包配置文件、包版本文件。
 # ==============================================================================
 cmake_minimum_required(VERSION 3.21)
 project(dynamic_array
@@ -23,8 +24,15 @@ project(dynamic_array
 include(CTest)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
+include(FetchContent)
 
 # 查找/声明依赖包
+FetchContent_Declare(
+	safe_calc
+	GIT_REPOSITORY https://github.com/mtueih/safe_calc.git
+	GIT_TAG        v1.2.0          # 推荐锁定 tag 或 commit SHA，不要用 main
+	GIT_SHALLOW    TRUE            # 只取最新一层 commit，加速克隆
+)
 find_package(safe_calc REQUIRED)
 
 set(MAIN_PACKAGE_NAME ${PROJECT_NAME})

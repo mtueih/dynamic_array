@@ -50,14 +50,43 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Install dependencies
+          # ====================== 克隆外部依赖 ======================
+      - name: Clone Dependencies
         run: |
-          # 安装 safe_calc。
-          cd ${{ github.workspace }}
-          git clone https://github.com/mtueih/safe_calc.git deps/safe_calc
+          mkdir -p ${{ github.workspace }}/deps
+          cd ${{ github.workspace }}/deps
+            
+          git clone --depth 1 https://github.com/mtueih/safe_calc.git
+          
+          
+
+
+      - name: Configure CMake for dependencies - safe_calc
+        run: >
+          cmake -B ${{ github.workspace }}/deps/safe_calc/build
+          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DCMAKE_C_STANDARD=${{ matrix.c_standard }}
+          -DCMAKE_C_STANDARD_REQUIRED=ON
+          -DCMAKE_C_EXTENSIONS=OFF
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/deps/install
+          -S ${{ github.workspace }}/deps/safe_calc
+
+      - name: Build and install dependencies - safe_calc
+        run: |
+          cmake --build ${{ github.workspace }}/deps/safe_calc/build --config ${{ matrix.build_type }} --parallel
+          cmake --install ${{ github.workspace }}/deps/safe_calc/build
+
+
+      - name: Configure CMake for dependencies - safe_calc
+        run: |
+          # 构建依赖。
           mkdir -p deps/safe_calc/build
           cd deps/safe_calc/build
-          cmake .. -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/deps/install
+          cmake .. -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/deps/install -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DCMAKE_C_STANDARD=${{ matrix.c_standard }}
+          -DCMAKE_C_STANDARD_REQUIRED=ON
+          -DCMAKE_C_EXTENSIONS=OFF
           cmake --build . --config ${{ matrix.build_type }}
           cmake --install .
 
