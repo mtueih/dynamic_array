@@ -17,7 +17,6 @@
 
 #include "dynamic_array.h"
 
-#include <assert.h>
 #include <safe_calc.h>
 #include <stdlib.h>
 #include <string.h>
