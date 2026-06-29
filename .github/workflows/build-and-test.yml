@@ -69,6 +69,7 @@ jobs:
           -DCMAKE_C_STANDARD=${{ matrix.c_standard }}
           -DCMAKE_C_STANDARD_REQUIRED=ON
           -DCMAKE_C_EXTENSIONS=OFF
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/deps/install
           -S ${{ github.workspace }}
 
       - name: Build
