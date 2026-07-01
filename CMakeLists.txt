@@ -1,56 +1,61 @@
-# ==============================================================================
-# dynamic_array — 顶层 CMake 构建脚本
-# ==============================================================================
+# =============================================================================
+# dynamic_array — 项目主 CMake 脚本
+# =============================================================================
 # 职责：
-#   1. 项目声明。
-#   2. 模块引入与依赖处理。
-#   3. 全局变量定义。
-#   4. 源码与测试构建。
-#   5. 生成/安装项目目标集文件、包配置文件、包版本文件。
-# ==============================================================================
+#	1. 项目声明。
+#	2. 模块引入、依赖处理、全局变量定义等初始化操作。
+#	3. 项目所有的构建任务。
+#	5. 包配置与安装。
+# =============================================================================
+
+
+# -----------------------------------------------------------------------------
+# 项目声明
+# -----------------------------------------------------------------------------
 cmake_minimum_required(VERSION 3.21)
-project(dynamic_array
-	VERSION 1.0.0
-	LANGUAGES C
-)
+project(dynamic_array VERSION 1.0.0 LANGUAGES C)
 
 
-# ------------------------------------------------------------------------
-# 核心模块
-# ------------------------------------------------------------------------
-# CTest                     — 测试框架支持
-# GNUInstallDirs            — 平台标准安装路径变量（lib / bin / include）
-# CMakePackageConfigHelpers — configure_package_config_file 等包配置宏
-include(CTest)
-include(GNUInstallDirs)
-include(CMakePackageConfigHelpers)
-include(FetchContent)
-
-# 查找/声明依赖包
-FetchContent_Declare(
-	safe_calc
-	GIT_REPOSITORY https://github.com/mtueih/safe_calc.git
-	GIT_TAG        v1.2.0          # 推荐锁定 tag 或 commit SHA，不要用 main
-	GIT_SHALLOW    TRUE            # 只取最新一层 commit，加速克隆
-)
-find_package(safe_calc REQUIRED)
-
+# -----------------------------------------------------------------------------
+# 全局变量定义
+# -----------------------------------------------------------------------------
+# 变量：
+#	1. MAIN_PACKAGE_NAME: 项目主包的名称。
+#	2. MAIN_LIB_TARGET_NAME: 项目主库的目标名称。
+#	3. DYNAMIC_ARRAY_INSTALL: 是否启用安装。
+# -----------------------------------------------------------------------------
 set(MAIN_PACKAGE_NAME ${PROJECT_NAME})
 set(MAIN_LIB_TARGET_NAME ${PROJECT_NAME})
+option(DYNAMIC_ARRAY_INSTALL "Enable installation" OFF)
+
+
+# -----------------------------------------------------------------------------
+# 模块引入
+# -----------------------------------------------------------------------------
+# 模块：
+#	1. CTest: 提供测试支持并定义 BUILD_TESTING 选项。
+#	2. GNUInstallDirs: 提供跨平台的标准安装目录变量，用于安装。
+#	3. CMakePackageConfigHelpers: 提供生成 CMake 包配置文件、包版本文件
+#		的辅助函数。
+# -----------------------------------------------------------------------------
+include(CTest)
+
+if (DYNAMIC_ARRAY_INSTALL)
+	include(GNUInstallDirs)
+	include(CMakePackageConfigHelpers)
+endif ()
 
 
 # ------------------------------------------------------------------------
-# 构建目标
+# 源码构建
 # ------------------------------------------------------------------------
 add_subdirectory(src)
 
 
 # -----------------------------------------------------------------------------
-# 测试
+# 测试构建
 # -----------------------------------------------------------------------------
-# 控制测试构建行为。仅在启用 BUILD_TESTING 时添加 tests 子目录并注册测试。
-#
-# 若需跳过测试构建，可在命令行或打包流程中使用 -DBUILD_TESTING=OFF。
+# 注意：可通过设置 -DBUILD_TESTING=OFF 跳过测试构建。
 # -----------------------------------------------------------------------------
 if (BUILD_TESTING)
 	add_subdirectory(tests)
@@ -60,42 +65,35 @@ endif ()
 # -----------------------------------------------------------------------------
 # 包配置与安装
 # -----------------------------------------------------------------------------
-# 生成并安装供 find_package 导入的 CMake 包配置文件，并导出构建目标。
-#
-# 生成的文件包括：
-#
-#   1. safe_calcConfig.cmake
-#      包入口配置文件，用于在下游项目中定位并导入导出目标。
-#
-#   2. safe_calcConfigVersion.cmake
-#      用于在 find_package 时进行版本兼容性检查（SameMajorVersion）。
-# -----------------------------------------------------------------------------
+if (DYNAMIC_ARRAY_INSTALL)
+	# 生成并安装项目目标集文件。
+	install(EXPORT ${MAIN_PACKAGE_NAME}Targets
+		FILE ${MAIN_PACKAGE_NAME}Targets.cmake
+		NAMESPACE ${MAIN_PACKAGE_NAME}::
+		DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${MAIN_PACKAGE_NAME}
+	)
 
-# 安装 EXPORT 目标文件
-# 下游通过 find_package(safe_calc) 即可导入 safe_calc::safe_calc 目标
-install(EXPORT ${MAIN_PACKAGE_NAME}Targets
-	FILE ${MAIN_PACKAGE_NAME}Targets.cmake
-	NAMESPACE ${MAIN_PACKAGE_NAME}::
-	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${MAIN_PACKAGE_NAME}
-)
+	# 从模板文件生成包配置文件。
+	configure_package_config_file(
+		# 模板文件（cmake/${MAIN_PACKAGE_NAME}Config.cmake.in），需要手动编写。
+		${PROJECT_SOURCE_DIR}/cmake/${MAIN_PACKAGE_NAME}Config.cmake.in
 
-# 从模板生成包配置文件。
-configure_package_config_file(
-	${PROJECT_SOURCE_DIR}/cmake/${MAIN_PACKAGE_NAME}Config.cmake.in
-	${PROJECT_BINARY_DIR}/${MAIN_PACKAGE_NAME}Config.cmake
-	INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${MAIN_PACKAGE_NAME}
-)
+		${PROJECT_BINARY_DIR}/${MAIN_PACKAGE_NAME}Config.cmake
+		INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${MAIN_PACKAGE_NAME}
+	)
 
-# 生成版本兼容性检查文件。
-write_basic_package_version_file(
-	${PROJECT_BINARY_DIR}/${MAIN_PACKAGE_NAME}ConfigVersion.cmake
-	VERSION ${PROJECT_VERSION}
-	COMPATIBILITY SameMajorVersion
-)
+	# 生成包版本文件。
+	write_basic_package_version_file(
+		${PROJECT_BINARY_DIR}/${MAIN_PACKAGE_NAME}ConfigVersion.cmake
+		VERSION ${PROJECT_VERSION}
+		# 兼容性设置为 SameMajorVersion，表示主版本号相同则兼容。
+		COMPATIBILITY SameMajorVersion
+	)
 
-# 将生成的包配置文件安装到标准 CMake 包目录。
-install(FILES
-	${PROJECT_BINARY_DIR}/${MAIN_PACKAGE_NAME}Config.cmake
-	${PROJECT_BINARY_DIR}/${MAIN_PACKAGE_NAME}ConfigVersion.cmake
-	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${MAIN_PACKAGE_NAME}
-)
+	# 将生成的包配置文件安装到标准 CMake 包目录。
+	install(FILES
+		${PROJECT_BINARY_DIR}/${MAIN_PACKAGE_NAME}Config.cmake
+		${PROJECT_BINARY_DIR}/${MAIN_PACKAGE_NAME}ConfigVersion.cmake
+		DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${MAIN_PACKAGE_NAME}
+	)
+endif ()
