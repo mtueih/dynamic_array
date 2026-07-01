@@ -63,14 +63,14 @@ jobs:
         if: runner.os == 'Windows' && matrix.c_compiler == 'cl'
 
       - name: Cache CPM.cmake
-        uses: actions/checkout@v6
+        uses: actions/cache@v6
         with:
           path: cpm-cache
           key: ${{ runner.os }}-cpm-${{ hashFiles('**/CMakeLists.txt') }}
           restore-keys: |
             ${{ runner.os }}-cpm-
 
-      - name: Configure CMake 
+      - name: Configure CMake
         run: >
           cmake
           -S .
