@@ -15,9 +15,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <dynamic_array.h>
+
+/*-----------------------------------------------------------------------------
+ * 头文件包含
+ *---------------------------------------------------------------------------*/
+#include "dynamic_array.h"
+
 #include <stdio.h>
 #include <stdlib.h>
+
+
+/*-----------------------------------------------------------------------------
+ * 简易测试框架
+ *---------------------------------------------------------------------------*/
 
 /* 测试计数器 */
 static int tests_passed = 0;
@@ -35,13 +45,13 @@ static int tests_failed = 0;
         } \
     } while (0)
 
-/* ==================== 辅助函数 ==================== */
+/* 辅助函数。 */
 
 /* 打印整数数组内容 */
 static void print_int_array(darr_adt *darr) {
 	printf("[");
 	for (size_t i = 0; i < darr_length(darr); i++) {
-		int *val = (int *) darr_at(darr, i);
+		int *val = (int*)darr_at(darr, i);
 		if (val) {
 			printf("%d", *val);
 			if (i < darr_length(darr) - 1) printf(", ");
@@ -52,26 +62,29 @@ static void print_int_array(darr_adt *darr) {
 
 /* 谓词函数：检查元素是否等于某个值 */
 static bool predicate_equals(const void *elem, void *ctx) {
-	int target = *(int *) ctx;
-	int value = *(const int *) elem;
+	int target = *(int*)ctx;
+	int value = *(const int*)elem;
 	return value == target;
 }
 
 /* 比较函数：用于排序 */
 static int compare_ints(const void *a, const void *b, void *ctx) {
-	(void) ctx;
-	int va = *(const int *) a;
-	int vb = *(const int *) b;
+	(void)ctx;
+	int va = *(const int*)a;
+	int vb = *(const int*)b;
 	return va - vb;
 }
 
 /* 遍历回调函数 */
 static void print_element(void *elem, void *ctx) {
-	(void) ctx;
-	printf("%d ", *(int *) elem);
+	(void)ctx;
+	printf("%d ", *(int*)elem);
 }
 
-/* ==================== 测试用例 ==================== */
+
+/*-----------------------------------------------------------------------------
+ * 测试函数
+ *---------------------------------------------------------------------------*/
 
 /* 测试创建和销毁 */
 static void test_create_destroy(void) {
@@ -117,13 +130,13 @@ static void test_append(void) {
 	TEST_ASSERT(darr_length(darr) == 3, "长度为3");
 
 	/* 验证元素值 */
-	int *elem = (int *) darr_at(darr, 0);
+	int *elem = (int*)darr_at(darr, 0);
 	TEST_ASSERT(elem != NULL && *elem == 10, "第一个元素值为10");
 
-	elem = (int *) darr_at(darr, 1);
+	elem = (int*)darr_at(darr, 1);
 	TEST_ASSERT(elem != NULL && *elem == 20, "第二个元素值为20");
 
-	elem = (int *) darr_at(darr, 2);
+	elem = (int*)darr_at(darr, 2);
 	TEST_ASSERT(elem != NULL && *elem == 30, "第三个元素值为30");
 
 	/* 追加多个元素 */
@@ -158,13 +171,13 @@ static void test_insert(void) {
 
 	TEST_ASSERT(darr_length(darr) == 3, "长度为3");
 
-	int *elem = (int *) darr_at(darr, 0);
+	int *elem = (int*)darr_at(darr, 0);
 	TEST_ASSERT(elem != NULL && *elem == 100, "第一个元素为100");
 
-	elem = (int *) darr_at(darr, 1);
+	elem = (int*)darr_at(darr, 1);
 	TEST_ASSERT(elem != NULL && *elem == 150, "第二个元素为150");
 
-	elem = (int *) darr_at(darr, 2);
+	elem = (int*)darr_at(darr, 2);
 	TEST_ASSERT(elem != NULL && *elem == 200, "第三个元素为200");
 
 	/* 测试越界插入 */
@@ -190,7 +203,7 @@ static void test_remove(void) {
 	TEST_ASSERT(ret == DARR_SUCCESS, "删除索引2的元素成功");
 	TEST_ASSERT(darr_length(darr) == 4, "删除后长度为4");
 
-	int *elem = (int *) darr_at(darr, 2);
+	int *elem = (int*)darr_at(darr, 2);
 	TEST_ASSERT(elem != NULL && *elem == 40, "删除后索引2的元素为40");
 
 	/* 删除多个元素 */
@@ -280,7 +293,7 @@ static void test_sort_reverse(void) {
 	int expected[] = {1, 2, 3, 5, 8, 9};
 	bool sorted_correctly = true;
 	for (size_t i = 0; i < darr_length(darr); i++) {
-		int *elem = (int *) darr_at(darr, i);
+		int *elem = (int*)darr_at(darr, i);
 		if (!elem || *elem != expected[i]) {
 			sorted_correctly = false;
 			break;
@@ -295,7 +308,7 @@ static void test_sort_reverse(void) {
 	int expected_reversed[] = {9, 8, 5, 3, 2, 1};
 	bool reversed_correctly = true;
 	for (size_t i = 0; i < darr_length(darr); i++) {
-		int *elem = (int *) darr_at(darr, i);
+		int *elem = (int*)darr_at(darr, i);
 		if (!elem || *elem != expected_reversed[i]) {
 			reversed_correctly = false;
 			break;
@@ -322,8 +335,8 @@ static void test_clone(void) {
 	/* 验证元素值 */
 	bool elements_match = true;
 	for (size_t i = 0; i < darr_length(darr); i++) {
-		int *orig = (int *) darr_at(darr, i);
-		int *cloned = (int *) darr_at(clone, i);
+		int *orig = (int*)darr_at(darr, i);
+		int *cloned = (int*)darr_at(clone, i);
 		if (!orig || !cloned || *orig != *cloned) {
 			elements_match = false;
 			break;
@@ -385,10 +398,10 @@ static void test_swap(void) {
 	int ret = darr_swap(darr, 1, 3);
 	TEST_ASSERT(ret == DARR_SUCCESS, "交换元素成功");
 
-	int *elem = (int *) darr_at(darr, 1);
+	int *elem = (int*)darr_at(darr, 1);
 	TEST_ASSERT(elem != NULL && *elem == 40, "索引1的元素现在是40");
 
-	elem = (int *) darr_at(darr, 3);
+	elem = (int*)darr_at(darr, 3);
 	TEST_ASSERT(elem != NULL && *elem == 20, "索引3的元素现在是20");
 
 	/* 测试越界交换 */
@@ -411,13 +424,13 @@ static void test_prepend(void) {
 
 	TEST_ASSERT(darr_length(darr) == 3, "长度为3");
 
-	int *elem = (int *) darr_at(darr, 0);
+	int *elem = (int*)darr_at(darr, 0);
 	TEST_ASSERT(elem != NULL && *elem == 10, "第一个元素为10");
 
-	elem = (int *) darr_at(darr, 1);
+	elem = (int*)darr_at(darr, 1);
 	TEST_ASSERT(elem != NULL && *elem == 20, "第二个元素为20");
 
-	elem = (int *) darr_at(darr, 2);
+	elem = (int*)darr_at(darr, 2);
 	TEST_ASSERT(elem != NULL && *elem == 30, "第三个元素为30");
 
 	darr_destroy(darr);
@@ -446,8 +459,10 @@ static void test_binary_search(void) {
 	darr_destroy(darr);
 }
 
-/* ==================== 主函数 ==================== */
 
+/*-----------------------------------------------------------------------------
+ * 主函数
+ *---------------------------------------------------------------------------*/
 int main(void) {
 	printf("========================================\n");
 	printf("   Dynamic Array 单元测试\n");
