@@ -1,0 +1,92 @@
+# =============================================================================
+# CMake: Build & Test
+# =============================================================================
+# 职责：
+#   1. 构建验证 — 在多平台 / 多编译器 / 多 C 标准组合下确保编译通过
+#   2. 行为验证 — 运行 CTest 单元测试，确保程序行为正确
+# =============================================================================
+name: "CMake: Build & Test"
+
+on:
+  push:
+    branches: [ "main" ]
+    paths: &build-paths
+      - "include/**"
+      - "src/**"
+      - "tests/**"
+      - "CMakeLists.txt"
+      - "cmake/**"
+      - ".github/workflows/cmake-build-and-test.yml"
+  pull_request:
+    branches: [ "main" ]
+    paths: *build-paths
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+
+    strategy:
+      # 禁用 fail-fast，使所有矩阵组合独立执行，一次性拿到全部构建结果。
+      fail-fast: false
+
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        c_compiler: [ gcc, clang, cl ]
+        c_standard: [ 99, 17, 23 ]
+        build_type: [ Debug, Release ]
+
+        exclude:
+          - os: ubuntu-latest
+            c_compiler: cl
+          - os: macos-latest
+            c_compiler: gcc
+          - os: macos-latest
+            c_compiler: cl
+          - os: windows-latest
+            c_compiler: gcc
+          - os: windows-latest
+            c_compiler: clang
+          - os: windows-latest
+            c_standard: 23
+
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: mozilla-actions/sccache-action@v0.0.10
+
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows' && matrix.c_compiler == 'cl'
+
+      - name: Cache CPM.cmake
+        uses: actions/checkout@v6
+        with:
+          path: cpm-cache
+          key: ${{ runner.os }}-cpm-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-cpm-
+
+      - name: Configure CMake 
+        run: >
+          cmake
+          -S .
+          -B build
+          -G Ninja
+          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+          -DCMAKE_C_STANDARD=${{ matrix.c_standard }}
+          -DCMAKE_C_STANDARD_REQUIRED=ON
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DCMAKE_C_EXTENSIONS=OFF
+          -DSAFE_CALC_INSTALL=OFF
+          -DCMAKE_C_COMPILER_LAUNCHER=sccache
+          -DCPM_SOURCE_CACHE=${{ github.workspace }}/cpm-cache
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: CTest
+        run: ctest --test-dir build --output-on-failure

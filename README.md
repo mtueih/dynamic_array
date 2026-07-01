@@ -3,7 +3,7 @@
 [![C Standard](https://img.shields.io/badge/C-C99/C11/C17/C23-blue.svg)](https://zh.cppreference.com/c)
 [![CMake](https://img.shields.io/badge/CMake-3.21+-green.svg)](https://cmake.org/)
 [![GitHub License](https://img.shields.io/github/license/mtueih/dynamic_array)](LICENSE)
-[![CMake on multiple platforms](https://github.com/mtueih/dynamic_array/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/mtueih/dynamic_array/actions/workflows/build-and-test.yml)
+[![CMake on multiple platforms](https://github.com/mtueih/dynamic_array/actions/workflows/cmake-build-and-test.yml/badge.svg)](https://github.com/mtueih/dynamic_array/actions/workflows/cmake-build-and-test.yml)
 
 ## 安装
 
