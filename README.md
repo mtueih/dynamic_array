@@ -11,7 +11,7 @@
 
 - CMake 3.21 或更高版本。
 
-**依赖**：
+**依赖**（由 CMake 自身通过 [CPM.cmake](https://github.com/cpm-cmake/CPM.cmake) 处理，不用手动安装。）：
 
 - [`safe_calc`](https://github.com/mtueih/safe_calc)。
 
@@ -24,9 +24,28 @@ cd dynamic_array
 mkdir build && cd build
 
 # 配置并安装。
-cmake ..
+cmake .. -DDYNAMIC_ARRAY_INSTALL=ON -DBUILD_TESTING=OFF
 cmake --build .
 cmake --install .
+```
+
+### CPM.cmake
+
+**环境要求**：
+
+- [CPM.cmake](https://github.com/cpm-cmake/CPM.cmake)。
+
+在 CMakeLists.txt 中添加以下内容：
+
+```cmake
+include(${PROJECT_SOURCE_DIR}/cmake/CPM.cmake)
+
+CPMAddPackage(
+	NAME dynamic_array
+	GITHUB_REPOSITORY mtueih/dynamic_array
+	GIT_TAG v1.0.0
+	OPTIONS "DYNAMIC_ARRAY_INSTALL OFF" "BUILD_TESTING OFF"
+)
 ```
 
 ## 使用
